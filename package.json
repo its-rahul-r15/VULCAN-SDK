@@ -1,5 +1,5 @@
 {
-  "name": "@vulcan-ai/sdk",
+  "name": "@its-rahul-r15/vulcan-sdk",
   "version": "1.0.0",
   "description": "Production-grade AI Agent SDK — multi-provider, typed, observable, and framework-free.",
   "keywords": [
@@ -14,15 +14,15 @@
     "tool-calling",
     "multi-agent"
   ],
-  "author": "Vulcan AI",
+  "author": "Rahul Sharma",
   "license": "MIT",
-  "homepage": "https://github.com/vulcan-ai/sdk#readme",
+  "homepage": "https://github.com/its-rahul-r15/VULCAN-SDK#readme",
   "repository": {
     "type": "git",
-    "url": "https://github.com/vulcan-ai/sdk.git"
+    "url": "git+https://github.com/its-rahul-r15/VULCAN-SDK.git"
   },
   "bugs": {
-    "url": "https://github.com/vulcan-ai/sdk/issues"
+    "url": "https://github.com/its-rahul-r15/VULCAN-SDK/issues"
   },
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
@@ -55,7 +55,8 @@
     "example:handoff": "ts-node --esm examples/multi-agent-handoff.ts",
     "example:guardrails": "ts-node --esm examples/guardrails.ts",
     "example:structured": "ts-node --esm examples/structured-output.ts",
-    "example:streaming": "ts-node --esm examples/streaming.ts"
+    "example:streaming": "ts-node --esm examples/streaming.ts",
+    "publish-check": "node scripts/publish-check.js"
   },
   "peerDependencies": {
     "@anthropic-ai/sdk": "^0.20.0",
