@@ -3,6 +3,13 @@ import { InteractiveSandbox } from './InteractiveSandbox'
 
 export function LandingPage({ onViewChange }) {
   const [copied, setCopied] = useState(false)
+  const [copiedCard, setCopiedCard] = useState(null)
+
+  const copyTemplate = (text, cardId) => {
+    navigator.clipboard.writeText(text)
+    setCopiedCard(cardId)
+    setTimeout(() => setCopiedCard(null), 2000)
+  }
 
   const copyToClipboard = () => {
     navigator.clipboard.writeText('npm install vulcan-agentic-sdk')
@@ -132,14 +139,161 @@ export function LandingPage({ onViewChange }) {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="border-t border-border-muted py-12 max-w-7xl mx-auto px-6 w-full flex flex-col sm:flex-row items-center justify-between text-xs text-neutral-500 gap-4">
-        <div>
-          © 2026 Vulcan SDK. Open Source under MIT License.
+      {/* Build with the Vulcan SDK today Section */}
+      <section className="border-t border-border-muted py-24 bg-neutral-950/20">
+        <div className="max-w-7xl mx-auto px-6 w-full">
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 mb-12 text-left">
+            <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white flex flex-col sm:flex-row sm:items-center gap-3">
+              <span>Build with the Vulcan</span>
+              <span className="inline-flex items-center justify-center rounded-full border border-neutral-700 px-3.5 py-0.5 text-lg font-mono text-neutral-400 bg-neutral-900/40 w-fit">SDK</span>
+              <span>today</span>
+            </h2>
+            <button 
+              onClick={() => onViewChange('docs')}
+              className="h-10 inline-flex items-center justify-center rounded-full bg-white px-5 text-xs font-semibold text-black transition hover:bg-neutral-200"
+            >
+              Read the docs ↗
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-left">
+            {/* Card 1 */}
+            <div className="rounded-xl border border-border-muted bg-bg-card p-6 flex flex-col justify-between min-h-[220px] transition hover:border-neutral-800">
+              <div>
+                <h3 className="text-lg font-bold text-white mb-2">Chatbot Starter Template</h3>
+                <p className="text-sm text-neutral-400 leading-relaxed">
+                  Learn how to build a full-featured AI chatbot with persistence, multi-modal chat, and more.
+                </p>
+              </div>
+              <div className="mt-6">
+                <button
+                  onClick={() => copyTemplate('npx tsx examples/basic-agent.ts', 'basic')}
+                  className="w-full h-10 inline-flex items-center justify-between rounded-lg border border-border-muted bg-black/40 px-4 text-xs font-mono text-neutral-400 hover:text-white transition hover:border-neutral-700"
+                >
+                  <span>{copiedCard === 'basic' ? 'Copied prompt!' : 'Copy install prompt'}</span>
+                  <svg className="h-4 w-4 text-neutral-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            {/* Card 2 */}
+            <div className="rounded-xl border border-border-muted bg-bg-card p-6 flex flex-col justify-between min-h-[220px] transition hover:border-neutral-800">
+              <div>
+                <h3 className="text-lg font-bold text-white mb-2">Build a Slackbot Agent</h3>
+                <p className="text-sm text-neutral-400 leading-relaxed">
+                  Learn how to build a Slackbot that responds to direct messages and mentions in channels.
+                </p>
+              </div>
+              <div className="mt-6">
+                <button
+                  onClick={() => copyTemplate('npx tsx examples/multi-agent-handoff.ts', 'handoff')}
+                  className="w-full h-10 inline-flex items-center justify-between rounded-lg border border-border-muted bg-black/40 px-4 text-xs font-mono text-neutral-400 hover:text-white transition hover:border-neutral-700"
+                >
+                  <span>{copiedCard === 'handoff' ? 'Copied prompt!' : 'Copy install prompt'}</span>
+                  <svg className="h-4 w-4 text-neutral-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            {/* Card 3 */}
+            <div className="rounded-xl border border-border-muted bg-bg-card p-6 flex flex-col justify-between min-h-[220px] transition hover:border-neutral-800">
+              <div>
+                <h3 className="text-lg font-bold text-white mb-2">Build a SQL Agent</h3>
+                <p className="text-sm text-neutral-400 leading-relaxed">
+                  Learn how to build an app that interacts with a PostgreSQL database using natural language.
+                </p>
+              </div>
+              <div className="mt-6">
+                <button
+                  onClick={() => copyTemplate('npx tsx examples/structured-output.ts', 'sql')}
+                  className="w-full h-10 inline-flex items-center justify-between rounded-lg border border-border-muted bg-black/40 px-4 text-xs font-mono text-neutral-400 hover:text-white transition hover:border-neutral-700"
+                >
+                  <span>{copiedCard === 'sql' ? 'Copied prompt!' : 'Copy install prompt'}</span>
+                  <svg className="h-4 w-4 text-neutral-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
-        <div className="flex items-center gap-6">
-          <button onClick={() => onViewChange('docs')} className="hover:text-white transition">Documentation</button>
-          <a href="https://github.com/its-rahul-r15/VULCAN-SDK" target="_blank" rel="noopener noreferrer" className="hover:text-white transition">GitHub</a>
+      </section>
+
+      {/* Expanded Links Footer */}
+      <footer className="border-t border-border-muted bg-black pt-16 pb-12">
+        <div className="max-w-7xl mx-auto px-6 w-full">
+          <div className="grid grid-cols-2 md:grid-cols-6 gap-8 text-left mb-16">
+            <div>
+              <h4 className="text-xs font-semibold text-white mb-4 uppercase tracking-wider">Agent Stack</h4>
+              <ul className="space-y-2 text-xs text-neutral-400">
+                <li><button onClick={() => onViewChange('docs')} className="hover:text-white transition">Agent SDK</button></li>
+                <li><a href="#" className="hover:text-white transition">Agent Gateway</a></li>
+                <li><a href="#" className="hover:text-white transition">Guardrails</a></li>
+                <li><a href="#" className="hover:text-white transition">Memory Adapters</a></li>
+                <li><a href="#" className="hover:text-white transition">Tracer Core</a></li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="text-xs font-semibold text-white mb-4 uppercase tracking-wider">Core Platform</h4>
+              <ul className="space-y-2 text-xs text-neutral-400">
+                <li><a href="#" className="hover:text-white transition">CI/CD Deploy</a></li>
+                <li><a href="#" className="hover:text-white transition">Content Delivery</a></li>
+                <li><a href="#" className="hover:text-white transition">Edge Functions</a></li>
+                <li><a href="#" className="hover:text-white transition">Streaming APIs</a></li>
+                <li><a href="#" className="hover:text-white transition">Global Registry</a></li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="text-xs font-semibold text-white mb-4 uppercase tracking-wider">Security</h4>
+              <ul className="space-y-2 text-xs text-neutral-400">
+                <li><a href="#" className="hover:text-white transition">WAF</a></li>
+                <li><a href="#" className="hover:text-white transition">Audit Logs</a></li>
+                <li><a href="#" className="hover:text-white transition">PII Scrubbing</a></li>
+                <li><a href="#" className="hover:text-white transition">Data Privacy</a></li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="text-xs font-semibold text-white mb-4 uppercase tracking-wider">Tools</h4>
+              <ul className="space-y-2 text-xs text-neutral-400">
+                <li><span className="flex items-center gap-1.5 hover:text-white transition cursor-pointer">Vercel Drop <span className="bg-neutral-800 text-[9px] text-accent-orange font-sans px-1 rounded">New</span></span></li>
+                <li><a href="#" className="hover:text-white transition">Vulcan Agent</a></li>
+                <li><span className="flex items-center gap-1.5 hover:text-white transition cursor-pointer">Playground <span className="bg-neutral-800 text-[9px] text-accent-amber font-sans px-1 rounded">New</span></span></li>
+                <li><a href="#" className="hover:text-white transition">CLI Sandbox</a></li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="text-xs font-semibold text-white mb-4 uppercase tracking-wider">Frameworks</h4>
+              <ul className="space-y-2 text-xs text-neutral-400">
+                <li><a href="#" className="hover:text-white transition">Next.js</a></li>
+                <li><a href="#" className="hover:text-white transition">React</a></li>
+                <li><a href="#" className="hover:text-white transition">Vite</a></li>
+                <li><a href="#" className="hover:text-white transition">Remix</a></li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="text-xs font-semibold text-white mb-4 uppercase tracking-wider">SDK References</h4>
+              <ul className="space-y-2 text-xs text-neutral-400">
+                <li><button onClick={() => onViewChange('docs')} className="hover:text-white transition text-left">Quickstart</button></li>
+                <li><button onClick={() => onViewChange('docs')} className="hover:text-white transition text-left">Installation</button></li>
+                <li><button onClick={() => onViewChange('docs')} className="hover:text-white transition text-left">API Docs</button></li>
+                <li><a href="https://github.com/its-rahul-r15/VULCAN-SDK" target="_blank" rel="noopener noreferrer" className="hover:text-white transition">GitHub Repo</a></li>
+              </ul>
+            </div>
+          </div>
+
+          <div className="border-t border-border-muted pt-8 flex flex-col sm:flex-row items-center justify-between text-xs text-neutral-500 gap-4">
+            <div>
+              © 2026 Vulcan SDK. Open Source under MIT License.
+            </div>
+            <div className="flex items-center gap-6">
+              <button onClick={() => onViewChange('docs')} className="hover:text-white transition">Documentation</button>
+              <a href="https://github.com/its-rahul-r15/VULCAN-SDK" target="_blank" rel="noopener noreferrer" className="hover:text-white transition">GitHub</a>
+            </div>
+          </div>
         </div>
       </footer>
     </main>
