@@ -37,7 +37,7 @@ export const docsData: Record<string, DocPage> = {
       {
         title: '1. Create a Custom Tool',
         content: 'Tools in Vulcan are defined using Zod schemas for input validation. The runner validates model arguments before execution, shielding your application from incorrect formats.',
-        code: `import { Vulcan, z } from '@its_rahul_r15/vulcan-sdk'
+        code: `import { Vulcan, z } from 'vulcan-agentic-sdk'
 
 const calculatorTool = Vulcan.createTool({
   name: 'calculator',
@@ -79,7 +79,7 @@ async function main() {
       {
         title: 'Install the Base SDK',
         content: 'Vulcan has a lightweight footprint with zero heavy dependencies. Install it using npm, yarn, or pnpm:',
-        code: `npm install @its_rahul_r15/vulcan-sdk`,
+        code: `npm install vulcan-agentic-sdk`,
         codeLanguage: 'bash'
       },
       {
@@ -189,7 +189,7 @@ const triageAgent = Vulcan.createAgent({
   KeywordBlockGuardrail,
   PIIScrubberGuardrail,
   BlockedToolsGuardrail
-} from '@its_rahul_r15/vulcan-sdk'
+} from 'vulcan-agentic-sdk'
 
 const guardrailedAgent = Vulcan.createAgent({
   name: 'secure-helper',
@@ -205,7 +205,7 @@ const guardrailedAgent = Vulcan.createAgent({
       {
         title: 'Custom Logic Guardrails',
         content: 'You can write custom functions that evaluate runtime variables. For example, blocking requests outside business hours:',
-        code: `import { FunctionGuardrail } from '@its_rahul_r15/vulcan-sdk'
+        code: `import { FunctionGuardrail } from 'vulcan-agentic-sdk'
 
 const businessHoursGuard = new FunctionGuardrail('business-hours', 'input', async (payload) => {
   const hours = new Date().getUTCHours()
@@ -231,7 +231,7 @@ const businessHoursGuard = new FunctionGuardrail('business-hours', 'input', asyn
       {
         title: 'In-Memory Storage (Default)',
         content: 'Fast, non-persistent cache. Includes configurable TTL (Time to Live) options to automatically evict stale conversation contexts and conserve server resources.',
-        code: `import { InMemoryStorage } from '@its_rahul_r15/vulcan-sdk'
+        code: `import { InMemoryStorage } from 'vulcan-agentic-sdk'
 
 const cache = new InMemoryStorage({
   ttlMs: 3600000, // 1 hour TTL
@@ -242,7 +242,7 @@ const cache = new InMemoryStorage({
       {
         title: 'SQLite Database Storage',
         content: 'Persistent file-backed storage. Stores chat sessions inside a local database table. If `better-sqlite3` is not installed, it falls back to memory storage with a console warning.',
-        code: `import { SQLiteStorage } from '@its_rahul_r15/vulcan-sdk'
+        code: `import { SQLiteStorage } from 'vulcan-agentic-sdk'
 
 const db = new SQLiteStorage('./database/vulcan-sessions.db')`,
         codeLanguage: 'typescript'
@@ -258,7 +258,7 @@ const db = new SQLiteStorage('./database/vulcan-sessions.db')`,
       {
         title: 'Vulcan Tracer',
         content: 'A lightweight tracing engine captures all LLM and tool actions per run. Traces are stored in memory and can be exported as clean JSON objects or pretty-printed text layout tables.',
-        code: `import { globalTracer } from '@its_rahul_r15/vulcan-sdk'
+        code: `import { globalTracer } from 'vulcan-agentic-sdk'
 
 const result = await Vulcan.run(agent, 'Help me build a pipeline.')
 const trace = globalTracer.getTrace(result.traceId)

@@ -5,7 +5,7 @@ export function LandingPage({ onViewChange }) {
   const [copied, setCopied] = useState(false)
 
   const copyToClipboard = () => {
-    navigator.clipboard.writeText('npm install @its_rahul_r15/vulcan-sdk')
+    navigator.clipboard.writeText('npm install vulcan-agentic-sdk')
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
   }
@@ -46,7 +46,7 @@ export function LandingPage({ onViewChange }) {
               >
                 <span className="flex items-center gap-2">
                   <span className="text-accent-orange font-bold">$</span>
-                  <span>npm i @its_rahul_r15/vulcan-sdk</span>
+                  <span>npm i vulcan-agentic-sdk</span>
                 </span>
                 <span className="ml-4 flex items-center justify-center text-neutral-500 hover:text-neutral-300">
                   {copied ? (

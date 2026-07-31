@@ -4,7 +4,7 @@ const CODE_TEMPLATES = {
   standard: {
     title: 'Standard Agent Loop',
     desc: 'Native tool calling loop powered by Gemini 2.5 Flash.',
-    code: `import { Vulcan, z } from '@its_rahul_r15/vulcan-sdk'
+    code: `import { Vulcan, z } from 'vulcan-agentic-sdk'
 
 // 1. Create agent with a custom calculator tool
 const agent = Vulcan.createAgent({
@@ -77,7 +77,7 @@ const result = await Vulcan.run(triage, 'Find invoice INV-2026')`,
   guardrails: {
     title: 'Border Safety Guardrails',
     desc: 'Intercept payloads at input, output, or tool execution borders.',
-    code: `import { PIIScrubberGuardrail, KeywordBlockGuardrail } from '@its_rahul_r15/vulcan-sdk'
+    code: `import { PIIScrubberGuardrail, KeywordBlockGuardrail } from 'vulcan-agentic-sdk'
 
 const secureAgent = Vulcan.createAgent({
   name: 'secure-agent',

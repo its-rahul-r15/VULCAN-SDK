@@ -6,8 +6,8 @@
 
 Multi-provider · Typed · Observable · Framework-free
 
-[![npm version](https://img.shields.io/npm/v/@vulcan-ai/sdk.svg?style=flat-square)](https://www.npmjs.com/package/@vulcan-ai/sdk)
-[![CI](https://github.com/vulcan-ai/sdk/actions/workflows/ci.yml/badge.svg)](https://github.com/vulcan-ai/sdk/actions)
+[![npm version](https://img.shields.io/npm/v/vulcan-agentic-sdk.svg?style=flat-square)](https://www.npmjs.com/package/vulcan-agentic-sdk)
+[![CI](https://github.com/its-rahul-r15/VULCAN-SDK/actions/workflows/ci.yml/badge.svg)](https://github.com/its-rahul-r15/VULCAN-SDK/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](LICENSE)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.3-blue.svg?style=flat-square)](https://www.typescriptlang.org)
 
@@ -47,7 +47,7 @@ Build agents that:
 ## Installation
 
 ```bash
-npm install @vulcan-ai/sdk
+npm install vulcan-agentic-sdk
 
 # Add your preferred provider(s):
 npm install openai                    # OpenAI (GPT-4o, GPT-4 Turbo, etc.)
@@ -68,7 +68,7 @@ export OPENAI_API_KEY=sk-...
 ## Quick Start — 5 Minutes to Your First Agent
 
 ```typescript
-import { Vulcan, z } from '@vulcan-ai/sdk'
+import { Vulcan, z } from 'vulcan-agentic-sdk'
 
 // 1. Create a tool
 const calculator = Vulcan.createTool({
@@ -105,7 +105,7 @@ console.log(result.output) // "The answer is 546"
 Enable chain-of-thought reasoning with the built-in INITIAL → THINK → ANALYSE → TOOL_REQUEST → OUTPUT pipeline:
 
 ```typescript
-import { Agent } from '@vulcan-ai/sdk'
+import { Agent } from 'vulcan-agentic-sdk'
 
 const agent = new Agent({
   name: 'reasoner',

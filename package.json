@@ -1,5 +1,5 @@
 {
-  "name": "@its_rahul_r15/vulcan-sdk",
+  "name": "vulcan-agentic-sdk",
   "version": "1.0.0",
   "description": "Production-grade AI Agent SDK — multi-provider, typed, observable, and framework-free.",
   "keywords": [
