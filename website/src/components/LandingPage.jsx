@@ -226,61 +226,52 @@ export function LandingPage({ onViewChange }) {
       {/* Expanded Links Footer */}
       <footer className="border-t border-border-muted bg-black pt-16 pb-12">
         <div className="max-w-7xl mx-auto px-6 w-full">
-          <div className="grid grid-cols-2 md:grid-cols-6 gap-8 text-left mb-16">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-8 text-left mb-16">
             <div>
-              <h4 className="text-xs font-semibold text-white mb-4 uppercase tracking-wider">Agent Stack</h4>
+              <h4 className="text-xs font-semibold text-white mb-4 uppercase tracking-wider">Core Stack</h4>
               <ul className="space-y-2 text-xs text-neutral-400">
-                <li><button onClick={() => onViewChange('docs')} className="hover:text-white transition">Agent SDK</button></li>
-                <li><a href="#" className="hover:text-white transition">Agent Gateway</a></li>
-                <li><a href="#" className="hover:text-white transition">Guardrails</a></li>
-                <li><a href="#" className="hover:text-white transition">Memory Adapters</a></li>
-                <li><a href="#" className="hover:text-white transition">Tracer Core</a></li>
+                <li><button onClick={() => onViewChange('docs')} className="hover:text-white transition text-left">Agent Runner</button></li>
+                <li><button onClick={() => onViewChange('docs')} className="hover:text-white transition text-left">Type-Safe Tools</button></li>
+                <li><button onClick={() => onViewChange('docs')} className="hover:text-white transition text-left">Session Storage</button></li>
+                <li><button onClick={() => onViewChange('docs')} className="hover:text-white transition text-left">Observability Tracer</button></li>
+                <li><button onClick={() => onViewChange('docs')} className="hover:text-white transition text-left">Event Streaming</button></li>
               </ul>
             </div>
             <div>
-              <h4 className="text-xs font-semibold text-white mb-4 uppercase tracking-wider">Core Platform</h4>
+              <h4 className="text-xs font-semibold text-white mb-4 uppercase tracking-wider">Safety Guardrails</h4>
               <ul className="space-y-2 text-xs text-neutral-400">
-                <li><a href="#" className="hover:text-white transition">CI/CD Deploy</a></li>
-                <li><a href="#" className="hover:text-white transition">Content Delivery</a></li>
-                <li><a href="#" className="hover:text-white transition">Edge Functions</a></li>
-                <li><a href="#" className="hover:text-white transition">Streaming APIs</a></li>
-                <li><a href="#" className="hover:text-white transition">Global Registry</a></li>
+                <li><button onClick={() => onViewChange('docs')} className="hover:text-white transition text-left">PII Scrubber</button></li>
+                <li><button onClick={() => onViewChange('docs')} className="hover:text-white transition text-left">MaxLength Limit</button></li>
+                <li><button onClick={() => onViewChange('docs')} className="hover:text-white transition text-left">Blocked Tools</button></li>
+                <li><button onClick={() => onViewChange('docs')} className="hover:text-white transition text-left">Keyword Blocker</button></li>
+                <li><button onClick={() => onViewChange('docs')} className="hover:text-white transition text-left">Custom Functions</button></li>
               </ul>
             </div>
             <div>
-              <h4 className="text-xs font-semibold text-white mb-4 uppercase tracking-wider">Security</h4>
+              <h4 className="text-xs font-semibold text-white mb-4 uppercase tracking-wider">LLM Providers</h4>
               <ul className="space-y-2 text-xs text-neutral-400">
-                <li><a href="#" className="hover:text-white transition">WAF</a></li>
-                <li><a href="#" className="hover:text-white transition">Audit Logs</a></li>
-                <li><a href="#" className="hover:text-white transition">PII Scrubbing</a></li>
-                <li><a href="#" className="hover:text-white transition">Data Privacy</a></li>
+                <li><button onClick={() => onViewChange('docs')} className="hover:text-white transition text-left">Google Gemini (Default)</button></li>
+                <li><button onClick={() => onViewChange('docs')} className="hover:text-white transition text-left">OpenAI GPT</button></li>
+                <li><button onClick={() => onViewChange('docs')} className="hover:text-white transition text-left">Anthropic Claude</button></li>
               </ul>
             </div>
             <div>
-              <h4 className="text-xs font-semibold text-white mb-4 uppercase tracking-wider">Tools</h4>
+              <h4 className="text-xs font-semibold text-white mb-4 uppercase tracking-wider">Starter Examples</h4>
               <ul className="space-y-2 text-xs text-neutral-400">
-                <li><span className="flex items-center gap-1.5 hover:text-white transition cursor-pointer">Vercel Drop <span className="bg-neutral-800 text-[9px] text-accent-orange font-sans px-1 rounded">New</span></span></li>
-                <li><a href="#" className="hover:text-white transition">Vulcan Agent</a></li>
-                <li><span className="flex items-center gap-1.5 hover:text-white transition cursor-pointer">Playground <span className="bg-neutral-800 text-[9px] text-accent-amber font-sans px-1 rounded">New</span></span></li>
-                <li><a href="#" className="hover:text-white transition">CLI Sandbox</a></li>
+                <li><a href="https://github.com/its-rahul-r15/VULCAN-SDK/blob/master/examples/basic-agent.ts" target="_blank" rel="noopener noreferrer" className="hover:text-white transition">Basic Agent</a></li>
+                <li><a href="https://github.com/its-rahul-r15/VULCAN-SDK/blob/master/examples/multi-agent-handoff.ts" target="_blank" rel="noopener noreferrer" className="hover:text-white transition">Multi-Agent Handoff</a></li>
+                <li><a href="https://github.com/its-rahul-r15/VULCAN-SDK/blob/master/examples/guardrails.ts" target="_blank" rel="noopener noreferrer" className="hover:text-white transition">Safety Guardrails</a></li>
+                <li><a href="https://github.com/its-rahul-r15/VULCAN-SDK/blob/master/examples/structured-output.ts" target="_blank" rel="noopener noreferrer" className="hover:text-white transition">Structured Output</a></li>
+                <li><a href="https://github.com/its-rahul-r15/VULCAN-SDK/blob/master/examples/streaming.ts" target="_blank" rel="noopener noreferrer" className="hover:text-white transition">Live Streaming</a></li>
               </ul>
             </div>
             <div>
-              <h4 className="text-xs font-semibold text-white mb-4 uppercase tracking-wider">Frameworks</h4>
+              <h4 className="text-xs font-semibold text-white mb-4 uppercase tracking-wider">Resources</h4>
               <ul className="space-y-2 text-xs text-neutral-400">
-                <li><a href="#" className="hover:text-white transition">Next.js</a></li>
-                <li><a href="#" className="hover:text-white transition">React</a></li>
-                <li><a href="#" className="hover:text-white transition">Vite</a></li>
-                <li><a href="#" className="hover:text-white transition">Remix</a></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="text-xs font-semibold text-white mb-4 uppercase tracking-wider">SDK References</h4>
-              <ul className="space-y-2 text-xs text-neutral-400">
-                <li><button onClick={() => onViewChange('docs')} className="hover:text-white transition text-left">Quickstart</button></li>
-                <li><button onClick={() => onViewChange('docs')} className="hover:text-white transition text-left">Installation</button></li>
-                <li><button onClick={() => onViewChange('docs')} className="hover:text-white transition text-left">API Docs</button></li>
-                <li><a href="https://github.com/its-rahul-r15/VULCAN-SDK" target="_blank" rel="noopener noreferrer" className="hover:text-white transition">GitHub Repo</a></li>
+                <li><button onClick={() => onViewChange('docs')} className="hover:text-white transition text-left">Quickstart Guide</button></li>
+                <li><button onClick={() => onViewChange('docs')} className="hover:text-white transition text-left">API Reference</button></li>
+                <li><a href="https://github.com/its-rahul-r15/VULCAN-SDK" target="_blank" rel="noopener noreferrer" className="hover:text-white transition">GitHub Repository</a></li>
+                <li><a href="https://github.com/its-rahul-r15/VULCAN-SDK/blob/master/LICENSE" target="_blank" rel="noopener noreferrer" className="hover:text-white transition">MIT License</a></li>
               </ul>
             </div>
           </div>
