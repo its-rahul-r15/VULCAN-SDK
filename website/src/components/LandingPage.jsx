@@ -59,7 +59,7 @@ export function LandingPage({ onViewChange }) {
       <div className="absolute bottom-[-10%] right-[-20%] h-[700px] w-[700px] rounded-full bg-accent-amber/5 ambient-glow-2 pointer-events-none"></div>
 
       {/* Hero section */}
-      <div className="mx-auto max-w-7xl px-6 pt-20 pb-16 text-center lg:text-left">
+      <div className="mx-auto max-w-7xl px-6 pt-36 pb-32 text-center lg:text-left">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
           
           {/* Hero Left Column */}
