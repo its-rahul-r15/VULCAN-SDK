@@ -4,7 +4,7 @@ import path from 'path'
 
 console.log('📦 Vulcan SDK — Publish Readiness Check\n')
 
-function runCommand(command: string, stepName: string): boolean {
+function runCommand(command, stepName) {
   console.log(`⏳ Step: ${stepName}...`)
   try {
     execSync(command, { stdio: 'inherit' })
@@ -29,7 +29,7 @@ async function main() {
 
   // 3. Verify npm name scope
   const packageJsonPath = path.resolve(process.cwd(), 'package.json')
-  const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8')) as { name: string }
+  const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'))
   const name = packageJson.name
 
   console.log(`🔍 Package Name: ${name}`)
