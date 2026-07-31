@@ -1,9 +1,44 @@
 import React, { useState } from 'react'
 import { InteractiveSandbox } from './InteractiveSandbox'
 
+const HERO_TEMPLATES = {
+  Text: `import { Vulcan } from 'vulcan-agentic-sdk';
+
+const { output } = await Vulcan.run({
+  model: 'gemini-2.5-flash',
+  prompt: 'Explain quantum mechanics simply.',
+});`,
+  Structured: `import { Vulcan, z } from 'vulcan-agentic-sdk';
+
+const { object } = await Vulcan.generateStructured({
+  model: 'gemini-2.5-flash',
+  schema: z.object({ answer: z.string() }),
+  prompt: 'Return key highlights of Vulcan SDK.',
+});`,
+  Handoffs: `import { Vulcan } from 'vulcan-agentic-sdk';
+
+// Automatically routes conversation logic
+const result = await Vulcan.run(triageAgent, {
+  session: 'session-101',
+  prompt: 'Transfer me to billing support.',
+});`,
+  Guardrails: `import { Vulcan } from 'vulcan-agentic-sdk';
+
+// Safety checks active at input and output borders
+const secureResult = await Vulcan.run(secureAgent, {
+  prompt: 'Provide details about INV-2026.',
+  guardrails: [new PIIScrubberGuardrail()],
+});`,
+}
+
 export function LandingPage({ onViewChange }) {
   const [copied, setCopied] = useState(false)
   const [copiedCard, setCopiedCard] = useState(null)
+  
+  const [heroTab, setHeroTab] = useState('Text')
+  const [heroModel, setHeroModel] = useState('Gemini 2.5 Flash')
+  const [heroModelOpen, setHeroModelOpen] = useState(true)
+  const [heroToggle, setHeroToggle] = useState(true)
 
   const copyTemplate = (text, cardId) => {
     navigator.clipboard.writeText(text)
@@ -67,16 +102,127 @@ export function LandingPage({ onViewChange }) {
             </div>
           </div>
 
-          {/* Hero Right Column (Interactive Sandbox) */}
-          <div className="lg:col-span-6 w-full hidden lg:block">
-            <div className="relative rounded-2xl border border-border-muted/50 p-2 bg-black/40 backdrop-blur-sm">
-              <div className="absolute inset-0 bg-gradient-to-r from-accent-orange/5 to-accent-amber/5 rounded-2xl pointer-events-none"></div>
-              {/* Dummy text layout */}
-              <div className="text-[10px] font-mono text-neutral-500 text-left pl-4 pb-2">
-                Vulcan SDK CLI v1.0.0
+          {/* Hero Right Column (Mockup Sandbox Visual) */}
+          <div className="lg:col-span-6 w-full hidden lg:block relative z-10">
+            <div className="flex flex-col rounded-xl border border-border-muted bg-bg-card overflow-hidden shadow-2xl relative">
+              {/* Header Tabs */}
+              <div className="flex items-center justify-between border-b border-border-muted bg-black/40 px-4 py-2">
+                <div className="flex items-center gap-1">
+                  {Object.keys(HERO_TEMPLATES).map((tab) => (
+                    <button
+                      key={tab}
+                      onClick={() => setHeroTab(tab)}
+                      className={`rounded px-2.5 py-1 text-[11px] font-medium transition ${
+                        heroTab === tab
+                          ? 'bg-neutral-900 text-white border border-neutral-800'
+                          : 'text-neutral-400 hover:text-neutral-200'
+                      }`}
+                    >
+                      {tab}
+                    </button>
+                  ))}
+                </div>
+                <div className="flex items-center gap-1">
+                  <span className="h-1.5 w-1.5 rounded-full bg-accent-orange animate-ping"></span>
+                  <span className="text-[10px] font-mono text-neutral-500">agent.ts</span>
+                </div>
               </div>
+
+              {/* Editor Block */}
+              <div className="p-5 font-mono text-xs leading-relaxed text-left text-neutral-300 min-h-[190px] bg-black/60 relative overflow-x-auto">
+                <pre>
+                  <code>
+                    {HERO_TEMPLATES[heroTab].split('\n').map((line, idx) => {
+                      let styledLine = line;
+                      if (line.startsWith('import ') || line.startsWith('const ') || line.startsWith('await ')) {
+                        styledLine = line.replace(/(import|from|const|await)/g, '<span class="text-accent-orange">$1</span>')
+                      }
+                      if (line.includes('//')) {
+                        styledLine = `<span class="text-neutral-500">${line}</span>`
+                      }
+                      return (
+                        <span 
+                          key={idx} 
+                          className="block" 
+                          dangerouslySetInnerHTML={{ __html: styledLine }}
+                        />
+                      )
+                    })}
+                  </code>
+                </pre>
+
+                {/* Floating model dropdown checklist simulation overlay */}
+                {heroModelOpen && (
+                  <div className="absolute top-10 right-4 z-20 w-48 rounded-lg border border-border-muted bg-black/90 p-1.5 shadow-2xl backdrop-blur-md">
+                    <div className="flex items-center gap-1.5 border-b border-border-muted px-2 py-1 text-[9px] text-neutral-500 uppercase tracking-wider">
+                      <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                      </svg>
+                      <span>Search models...</span>
+                    </div>
+                    <div className="mt-1 flex flex-col gap-0.5">
+                      {[
+                        { name: 'Gemini 2.5 Flash', icon: '⚡' },
+                        { name: 'Claude 3.5 Sonnet', icon: '🎭' },
+                        { name: 'GPT-4o', icon: '🌀' },
+                        { name: 'Gemini 1.5 Pro', icon: '🌌' }
+                      ].map((model) => (
+                        <button
+                          key={model.name}
+                          onClick={() => {
+                            setHeroModel(model.name)
+                            setHeroModelOpen(false)
+                          }}
+                          className="flex items-center justify-between rounded px-2 py-1.5 text-left text-[10px] transition hover:bg-neutral-900 w-full"
+                        >
+                          <span className="flex items-center gap-1.5">
+                            <span className="text-xs">{model.icon}</span>
+                            <span className={heroModel === model.name ? 'text-white font-medium' : 'text-neutral-400'}>
+                              {model.name}
+                            </span>
+                          </span>
+                          {heroModel === model.name && (
+                            <svg className="h-3 w-3 text-accent-orange" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                            </svg>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Bottom controls */}
+              <div className="border-t border-border-muted bg-black/40 px-4 py-2 flex items-center justify-between text-[11px] text-neutral-400">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-neutral-500">Model:</span>
+                  <button 
+                    onClick={() => setHeroModelOpen(!heroModelOpen)}
+                    className="text-white hover:text-accent-orange transition underline decoration-dotted"
+                  >
+                    {heroModel}
+                  </button>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <span className="text-neutral-500">Use Reasoning Harness:</span>
+                  <button
+                    onClick={() => setHeroToggle(!heroToggle)}
+                    className={`relative inline-flex h-4 w-7 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                      heroToggle ? 'bg-accent-orange' : 'bg-neutral-800'
+                    }`}
+                  >
+                    <span className={`pointer-events-none inline-block h-3 w-3 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                      heroToggle ? 'translate-x-3' : 'translate-x-0'
+                    }`} />
+                  </button>
+                </div>
+              </div>
+
             </div>
           </div>
+
 
         </div>
       </div>
