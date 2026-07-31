@@ -37,7 +37,6 @@ const weatherTool = Vulcan.createTool({
 const harnessWeatherAgent = new Agent({
   name: 'harness-weather',
   instructions: 'You are a weather assistant that provides detailed weather reports.',
-  model: 'gpt-4o',
   tools: [weatherTool],
   reasoningMode: 'harness', // Enable chain-of-thought pipeline
 })
@@ -47,7 +46,6 @@ const harnessWeatherAgent = new Agent({
 const streamingAgent = new Agent({
   name: 'story-teller',
   instructions: 'You are a creative storyteller. Tell engaging short stories.',
-  model: 'gpt-4o',
 })
 
 // ── Event handler ─────────────────────────────────────────────

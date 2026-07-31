@@ -1221,7 +1221,7 @@ var init_runner = __esm({
       async _callWithRetry(ctx, messages, tools, options) {
         const config = ctx.agentConfig;
         const maxRetries = config.maxRetries ?? 3;
-        const providerName = options.provider ?? config.providerName ?? "openai";
+        const providerName = options.provider ?? config.providerName ?? "gemini";
         const fallbacks = config.fallbackProviders ?? [];
         const providerChain = [providerName, ...fallbacks];
         let lastError;
@@ -1230,7 +1230,7 @@ var init_runner = __esm({
           for (let attempt = 0; attempt <= maxRetries; attempt++) {
             try {
               const response = await provider.chat(messages, tools, {
-                model: config.model ?? "gpt-4o",
+                model: config.model ?? "gemini-1.5-flash",
                 temperature: options.temperature ?? config.temperature,
                 maxTokens: options.maxTokens ?? config.maxTokens,
                 responseFormat: config.outputSchema && config.reasoningMode !== "harness" ? "json_object" : "text"
@@ -1615,8 +1615,8 @@ var Agent = class {
       maxRetries: 3,
       temperature: 0.7,
       reasoningMode: "standard",
-      providerName: "openai",
-      model: "gpt-4o",
+      providerName: "gemini",
+      model: "gemini-1.5-flash",
       tools: [],
       guardrails: [],
       handoffs: [],
@@ -1767,6 +1767,143 @@ init_context();
 init_harness();
 init_tool();
 init_provider();
+
+// src/providers/gemini.ts
+init_provider();
+init_schema();
+var GeminiProvider = class extends BaseProvider {
+  constructor(apiKey) {
+    super();
+    this.apiKey = apiKey;
+  }
+  apiKey;
+  name = "gemini";
+  async chat(messages, tools, config) {
+    const model = await this._getModel(config.model);
+    const { system, rest } = this.extractSystemPrompt(messages);
+    const geminiContents = this._toGeminiContents(rest);
+    const geminiFunctionDeclarations = tools.length > 0 ? tools.map((t) => ({
+      name: t.name,
+      description: t.description,
+      parameters: zodToJsonSchema(t.inputSchema)
+    })) : void 0;
+    try {
+      const requestBody = {
+        contents: geminiContents,
+        generationConfig: {
+          temperature: config.temperature ?? 0.7,
+          maxOutputTokens: config.maxTokens,
+          responseMimeType: config.responseFormat === "json_object" ? "application/json" : "text/plain"
+        }
+      };
+      if (system) {
+        requestBody.systemInstruction = { parts: [{ text: system }] };
+      }
+      if (geminiFunctionDeclarations) {
+        requestBody.tools = [{ functionDeclarations: geminiFunctionDeclarations }];
+      }
+      const result = await model.generateContent(requestBody);
+      const response = result.response;
+      let textContent = "";
+      const toolCalls = [];
+      const parts = response.candidates?.[0]?.content?.parts ?? [];
+      let callIndex = 0;
+      for (const part of parts) {
+        if (typeof part.text === "string") {
+          textContent += part.text;
+        } else if (part.functionCall) {
+          toolCalls.push({
+            id: `gemini-call-${callIndex++}`,
+            name: String(part.functionCall.name),
+            arguments: part.functionCall.args
+          });
+        }
+      }
+      const usageMetadata = response.usageMetadata;
+      const usage = {
+        promptTokens: usageMetadata?.promptTokenCount ?? 0,
+        completionTokens: usageMetadata?.candidatesTokenCount ?? 0,
+        totalTokens: usageMetadata?.totalTokenCount ?? 0
+      };
+      const finishReason = toolCalls.length > 0 ? "tool_calls" : response.candidates?.[0]?.finishReason === "STOP" ? "stop" : "stop";
+      return {
+        content: textContent,
+        toolCalls,
+        usage,
+        finishReason,
+        model: config.model
+      };
+    } catch (error) {
+      throw this._wrapError(error);
+    }
+  }
+  async *stream(messages, tools, config) {
+    const model = await this._getModel(config.model);
+    const { system, rest } = this.extractSystemPrompt(messages);
+    const geminiContents = this._toGeminiContents(rest);
+    try {
+      const requestBody = {
+        contents: geminiContents,
+        generationConfig: { temperature: config.temperature ?? 0.7 }
+      };
+      if (system) {
+        requestBody.systemInstruction = { parts: [{ text: system }] };
+      }
+      const { stream } = await model.generateContentStream(requestBody);
+      for await (const chunk of stream) {
+        const text = chunk.text?.();
+        if (text) {
+          yield { type: "text_delta", content: text };
+        }
+      }
+      yield { type: "done" };
+    } catch (error) {
+      throw this._wrapError(error);
+    }
+  }
+  _toGeminiContents(messages) {
+    return messages.filter((m) => m.role !== "system").map((m) => ({
+      role: m.role === "assistant" ? "model" : "user",
+      parts: [{ text: m.content }]
+    }));
+  }
+  modelCache = /* @__PURE__ */ new Map();
+  genAI = null;
+  async _getModel(modelName) {
+    if (this.modelCache.has(modelName)) {
+      return this.modelCache.get(modelName);
+    }
+    try {
+      const { GoogleGenerativeAI } = __require("@google/generative-ai");
+      const apiKey = this.apiKey ?? process.env.GEMINI_API_KEY ?? "";
+      if (!apiKey) {
+        throw new ProviderError(
+          "gemini",
+          "Gemini API key not found. Set GEMINI_API_KEY environment variable or pass apiKey to GeminiProvider constructor."
+        );
+      }
+      if (!this.genAI) {
+        this.genAI = new GoogleGenerativeAI(apiKey);
+      }
+      const model = this.genAI.getGenerativeModel({ model: modelName });
+      this.modelCache.set(modelName, model);
+      return model;
+    } catch (error) {
+      if (error instanceof ProviderError) throw error;
+      throw new ProviderError(
+        "gemini",
+        "Google Generative AI package not found. Install it: npm install @google/generative-ai"
+      );
+    }
+  }
+  _wrapError(error) {
+    if (error instanceof ProviderError) return error;
+    const e = error;
+    const status = e.status;
+    return new ProviderError("gemini", String(e.message ?? error), status, status === 429);
+  }
+};
+providerRegistry.register("gemini", new GeminiProvider());
 
 // src/providers/openai.ts
 init_provider();
@@ -2072,131 +2209,6 @@ var AnthropicProvider = class extends BaseProvider {
   }
 };
 providerRegistry.register("anthropic", new AnthropicProvider());
-
-// src/providers/gemini.ts
-init_provider();
-init_schema();
-var GeminiProvider = class extends BaseProvider {
-  constructor(apiKey) {
-    super();
-    this.apiKey = apiKey;
-  }
-  apiKey;
-  name = "gemini";
-  clientCache = null;
-  async chat(messages, tools, config) {
-    const model = await this._getModel(config.model);
-    const { system, rest } = this.extractSystemPrompt(messages);
-    const geminiContents = this._toGeminiContents(rest);
-    const geminiFunctionDeclarations = tools.length > 0 ? tools.map((t) => ({
-      name: t.name,
-      description: t.description,
-      parameters: zodToJsonSchema(t.inputSchema)
-    })) : void 0;
-    try {
-      const requestBody = {
-        contents: geminiContents,
-        generationConfig: {
-          temperature: config.temperature ?? 0.7,
-          maxOutputTokens: config.maxTokens,
-          responseMimeType: config.responseFormat === "json_object" ? "application/json" : "text/plain"
-        }
-      };
-      if (system) {
-        requestBody.systemInstruction = { parts: [{ text: system }] };
-      }
-      if (geminiFunctionDeclarations) {
-        requestBody.tools = [{ functionDeclarations: geminiFunctionDeclarations }];
-      }
-      const result = await model.generateContent(requestBody);
-      const response = result.response;
-      let textContent = "";
-      const toolCalls = [];
-      const parts = response.candidates?.[0]?.content?.parts ?? [];
-      let callIndex = 0;
-      for (const part of parts) {
-        if (typeof part.text === "string") {
-          textContent += part.text;
-        } else if (part.functionCall) {
-          toolCalls.push({
-            id: `gemini-call-${callIndex++}`,
-            name: String(part.functionCall.name),
-            arguments: part.functionCall.args
-          });
-        }
-      }
-      const usageMetadata = response.usageMetadata;
-      const usage = {
-        promptTokens: usageMetadata?.promptTokenCount ?? 0,
-        completionTokens: usageMetadata?.candidatesTokenCount ?? 0,
-        totalTokens: usageMetadata?.totalTokenCount ?? 0
-      };
-      const finishReason = toolCalls.length > 0 ? "tool_calls" : response.candidates?.[0]?.finishReason === "STOP" ? "stop" : "stop";
-      return {
-        content: textContent,
-        toolCalls,
-        usage,
-        finishReason,
-        model: config.model
-      };
-    } catch (error) {
-      throw this._wrapError(error);
-    }
-  }
-  async *stream(messages, tools, config) {
-    const model = await this._getModel(config.model);
-    const { system, rest } = this.extractSystemPrompt(messages);
-    const geminiContents = this._toGeminiContents(rest);
-    try {
-      const requestBody = {
-        contents: geminiContents,
-        generationConfig: { temperature: config.temperature ?? 0.7 }
-      };
-      if (system) {
-        requestBody.systemInstruction = { parts: [{ text: system }] };
-      }
-      const { stream } = await model.generateContentStream(requestBody);
-      for await (const chunk of stream) {
-        const text = chunk.text?.();
-        if (text) {
-          yield { type: "text_delta", content: text };
-        }
-      }
-      yield { type: "done" };
-    } catch (error) {
-      throw this._wrapError(error);
-    }
-  }
-  _toGeminiContents(messages) {
-    return messages.filter((m) => m.role !== "system").map((m) => ({
-      role: m.role === "assistant" ? "model" : "user",
-      parts: [{ text: m.content }]
-    }));
-  }
-  async _getModel(modelName) {
-    if (this.clientCache) return this.clientCache;
-    try {
-      const { GoogleGenerativeAI } = __require("@google/generative-ai");
-      const genAI = new GoogleGenerativeAI(
-        this.apiKey ?? process.env.GEMINI_API_KEY ?? ""
-      );
-      this.clientCache = genAI.getGenerativeModel({ model: modelName });
-      return this.clientCache;
-    } catch {
-      throw new ProviderError(
-        "gemini",
-        "Google Generative AI package not found. Install it: npm install @google/generative-ai"
-      );
-    }
-  }
-  _wrapError(error) {
-    if (error instanceof ProviderError) return error;
-    const e = error;
-    const status = e.status;
-    return new ProviderError("gemini", String(e.message ?? error), status, status === 429);
-  }
-};
-providerRegistry.register("gemini", new GeminiProvider());
 
 // src/index.ts
 init_session();

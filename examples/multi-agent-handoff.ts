@@ -34,7 +34,6 @@ const billingAgent = new (await import('../src/core/agent.js').then(m => m.Agent
     Use the lookup_invoice tool to retrieve invoice details.
   `,
   tools: [lookupInvoiceTool],
-  model: 'gpt-4o',
 })
 
 // ── Specialized Agent: Technical Support ──────────────────────
@@ -65,7 +64,6 @@ const supportAgent = new (await import('../src/core/agent.js').then(m => m.Agent
     Use the troubleshoot tool to provide step-by-step guidance.
   `,
   tools: [troubleshootTool],
-  model: 'gpt-4o',
 })
 
 // ── Triage Agent ──────────────────────────────────────────────
@@ -81,7 +79,6 @@ const triageAgent = new Agent({
     - For technical problems, bugs, or product issues → hand off to the 'tech-support' agent
     - Only hand off ONCE — do not keep re-routing.
   `,
-  model: 'gpt-4o',
 })
   .withHandoff(billingAgent)
   .withHandoff(supportAgent)

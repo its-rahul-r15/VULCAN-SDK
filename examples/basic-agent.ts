@@ -7,7 +7,7 @@
  * - Reading the final result and trace
  */
 
-import { Vulcan, z, OpenAIProvider, VulcanTracer } from '../src/index.js'
+import { Vulcan, z, VulcanTracer } from '../src/index.js'
 
 // ── 1. Define a tool ──────────────────────────────────────────
 
@@ -41,8 +41,6 @@ const mathAgent = Vulcan.createAgent({
     When asked to calculate, always use the calculator tool.
     Explain your reasoning clearly.
   `,
-  model: 'gpt-4o',
-  providerName: 'openai',
   tools: [calculatorTool],
   maxTurns: 5,
 })

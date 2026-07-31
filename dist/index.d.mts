@@ -197,7 +197,7 @@ interface AgentConfig {
     name: string;
     /** System instructions for the agent */
     instructions: string;
-    /** Model identifier (e.g. 'gpt-4o', 'claude-3-5-sonnet', 'gemini-1.5-pro') */
+    /** Model identifier (e.g. 'gemini-1.5-flash', 'gemini-1.5-pro', 'gpt-4o', 'claude-3-5-sonnet') */
     model?: string;
     /** Provider name — must be registered in ProviderRegistry */
     providerName?: string;
@@ -613,6 +613,19 @@ declare class ProviderError extends Error {
     constructor(providerName: string, message: string, statusCode?: number | undefined, retryable?: boolean);
 }
 
+declare class GeminiProvider extends BaseProvider {
+    private readonly apiKey?;
+    readonly name = "gemini";
+    constructor(apiKey?: string | undefined);
+    chat(messages: Message[], tools: ToolDefinition[], config: ProviderCallConfig): Promise<ModelResponse>;
+    stream(messages: Message[], tools: ToolDefinition[], config: ProviderCallConfig): AsyncGenerator<StreamChunk>;
+    private _toGeminiContents;
+    private modelCache;
+    private genAI;
+    private _getModel;
+    private _wrapError;
+}
+
 declare class OpenAIProvider extends BaseProvider {
     readonly name = "openai";
     private client;
@@ -638,18 +651,6 @@ declare class AnthropicProvider extends BaseProvider {
     stream(messages: Message[], tools: ToolDefinition[], config: ProviderCallConfig): AsyncGenerator<StreamChunk>;
     private _toAnthropicMessages;
     private _getClient;
-    private _wrapError;
-}
-
-declare class GeminiProvider extends BaseProvider {
-    private readonly apiKey?;
-    readonly name = "gemini";
-    private clientCache;
-    constructor(apiKey?: string | undefined);
-    chat(messages: Message[], tools: ToolDefinition[], config: ProviderCallConfig): Promise<ModelResponse>;
-    stream(messages: Message[], tools: ToolDefinition[], config: ProviderCallConfig): AsyncGenerator<StreamChunk>;
-    private _toGeminiContents;
-    private _getModel;
     private _wrapError;
 }
 

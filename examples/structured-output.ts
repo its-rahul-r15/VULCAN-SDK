@@ -33,7 +33,6 @@ const reviewAnalyzer = new Agent({
     Analyze the given product review and extract structured information.
     Be thorough and accurate in your analysis.
   `,
-  model: 'gpt-4o',
   outputSchema: ProductReviewSchema,
   maxTurns: 5,
 })

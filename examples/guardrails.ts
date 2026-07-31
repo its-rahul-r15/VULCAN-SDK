@@ -82,7 +82,6 @@ const businessHoursGuardrail = new FunctionGuardrail(
 const secureAgent = new Agent({
   name: 'secure-agent',
   instructions: 'You are a secure customer data assistant. Help with user profile lookups.',
-  model: 'gpt-4o',
   tools: [getUserInfoTool, deleteDataTool],
   guardrails: [
     inputLengthGuardrail,
