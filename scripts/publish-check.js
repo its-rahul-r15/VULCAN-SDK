@@ -36,7 +36,7 @@ async function main() {
   if (name.startsWith('@vulcan-ai/')) {
     console.warn(`⚠️  WARNING: You are using the default scope "${name}".`)
     console.warn(`   Unless you own the "@vulcan-ai" organization on npm, publishing will fail.`)
-    console.warn(`   Please update the "name" field in package.json to your own username/scope (e.g. "@its-rahul-r15/vulcan-sdk").\n`)
+    console.warn(`   Please update the "name" field in package.json to your own username/scope (e.g. "@its_rahul_r15/vulcan-sdk").\n`)
   } else {
     console.log(`✅ Package name scope looks good to publish.\n`)
   }
