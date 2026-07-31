@@ -1,0 +1,18 @@
+# .npmignore — Files to exclude from the published npm package
+src/
+test/
+examples/
+docs/
+.github/
+.env*
+.env
+.env.example
+*.config.ts
+tsconfig.json
+.eslintrc.json
+jest.config.ts
+coverage/
+node_modules/
+*.log
+.DS_Store
+Thumbs.db
