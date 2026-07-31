@@ -1,0 +1,64 @@
+@import "tailwindcss";
+
+@theme {
+  --color-background: #000000;
+  --color-foreground: #ffffff;
+  --color-accent-orange: #ff5500;
+  --color-accent-amber: #ffaa00;
+  --color-border-muted: #1f1f1f;
+  --color-bg-card: #0a0a0a;
+}
+
+@layer base {
+  body {
+    background-color: #000000;
+    color: #ffffff;
+    font-family: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #000000;
+}
+::-webkit-scrollbar-thumb {
+  background: #1f1f1f;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #2f2f2f;
+}
+
+/* Ambient glow animations */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px) scale(1);
+    opacity: 0.5;
+  }
+  50% {
+    transform: translateY(-15px) scale(1.05);
+    opacity: 0.75;
+  }
+}
+
+.ambient-glow {
+  filter: blur(100px);
+  animation: float 10s ease-in-out infinite;
+}
+
+.ambient-glow-2 {
+  filter: blur(120px);
+  animation: float 14s ease-in-out infinite reverse;
+}
+
+/* Code styling overrides */
+pre {
+  font-family: 'Fira Code', 'JetBrains Mono', ui-monospace, monospace;
+}
+code {
+  font-family: 'Fira Code', 'JetBrains Mono', ui-monospace, monospace;
+}
