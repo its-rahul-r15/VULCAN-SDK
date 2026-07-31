@@ -26,7 +26,7 @@ export class Agent {
       temperature: 0.7,
       reasoningMode: 'standard',
       providerName: 'gemini',
-      model: 'gemini-1.5-flash',
+      model: 'gemini-2.5-flash',
       tools: [],
       guardrails: [],
       handoffs: [],

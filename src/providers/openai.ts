@@ -155,6 +155,20 @@ export class OpenAIProvider extends BaseProvider {
           tool_call_id: m.toolCallId ?? '',
         }
       }
+      if (m.role === 'assistant' && m.toolCalls && m.toolCalls.length > 0) {
+        return {
+          role: 'assistant' as const,
+          content: m.content || '',
+          tool_calls: m.toolCalls.map((tc) => ({
+            id: tc.id,
+            type: 'function' as const,
+            function: {
+              name: tc.name,
+              arguments: JSON.stringify(tc.arguments),
+            },
+          })),
+        }
+      }
       return {
         role: m.role as 'system' | 'user' | 'assistant',
         content: m.content,

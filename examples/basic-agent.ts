@@ -7,7 +7,7 @@
  * - Reading the final result and trace
  */
 
-import { Vulcan, z, VulcanTracer } from '../src/index.js'
+import { Vulcan, z, VulcanTracer, globalTracer } from '../src/index.js'
 
 // ── 1. Define a tool ──────────────────────────────────────────
 
@@ -52,12 +52,23 @@ async function main() {
 
   const result = await Vulcan.run(mathAgent, 'What is 42 multiplied by 13, then divided by 7?')
 
-  console.log('✅ Final Answer:', result.output)
+  if (result.status === 'failed') {
+    console.error('❌ Run Failed! Error:', result.error)
+  } else {
+    console.log('✅ Final Answer:', result.output)
+  }
   console.log('📊 Stats:')
   console.log(`   Turns: ${result.turns}`)
   console.log(`   Tokens: ${result.usage.totalTokens}`)
   console.log(`   Status: ${result.status}`)
   console.log(`   Trace ID: ${result.traceId}`)
+
+  // Retrieve and print trace for debugging
+  const trace = globalTracer.getTrace(result.traceId)
+  if (trace) {
+    console.log('\n📊 Detailed Trace:')
+    console.log(globalTracer.export(trace, 'pretty'))
+  }
 }
 
 main().catch(console.error)

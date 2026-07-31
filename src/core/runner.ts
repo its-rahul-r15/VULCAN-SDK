@@ -15,7 +15,7 @@ import type {
 import { emptyUsage } from '../types/index.js'
 import { Agent } from './agent.js'
 import { RunContext } from './context.js'
-import { VulcanTracer } from '../tracing/tracer.js'
+import { VulcanTracer, globalTracer } from '../tracing/tracer.js'
 import { SessionManager } from '../memory/session.js'
 import { InMemoryStorage } from '../memory/in-memory.js'
 import { providerRegistry, ProviderError } from '../providers/provider.js'
@@ -43,7 +43,7 @@ export class AgentRunner {
   private readonly tracer: VulcanTracer
 
   constructor(tracer?: VulcanTracer) {
-    this.tracer = tracer ?? new VulcanTracer()
+    this.tracer = tracer ?? globalTracer
   }
 
   /**
@@ -283,7 +283,7 @@ export class AgentRunner {
       // ── Handle tool calls ──
       if (response.toolCalls.length > 0) {
         // Add assistant message with tool calls reference
-        ctx.addMessage({ role: 'assistant', content: response.content || '' })
+        ctx.addMessage({ role: 'assistant', content: response.content || '', toolCalls: response.toolCalls })
 
         for (const toolCall of response.toolCalls) {
           // Check for handoff signal first
@@ -577,7 +577,7 @@ export class AgentRunner {
       for (let attempt = 0; attempt <= maxRetries; attempt++) {
         try {
           const response = await provider.chat(messages, tools, {
-            model: config.model ?? 'gemini-1.5-flash',
+            model: config.model ?? 'gemini-2.5-flash',
             temperature: options.temperature ?? config.temperature,
             maxTokens: options.maxTokens ?? config.maxTokens,
             responseFormat:

@@ -5,6 +5,9 @@
  * https://github.com/vulcan-ai/sdk
  */
 
+import dotenv from 'dotenv'
+dotenv.config()
+
 // ─────────────────────────────────────────────
 // Core
 // ─────────────────────────────────────────────

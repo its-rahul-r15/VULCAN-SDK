@@ -10,6 +10,8 @@ interface Message {
     toolCallId?: string;
     /** Tool name — only present when role === 'tool' */
     name?: string;
+    /** Tool calls made by the assistant — only present when role === 'assistant' */
+    toolCalls?: ToolCall[];
 }
 interface ToolCall {
     id: string;

@@ -2,6 +2,7 @@ import { v4 } from 'uuid';
 import { z, ZodSchema } from 'zod';
 export { z } from 'zod';
 import { EventEmitter } from 'events';
+import dotenv from 'dotenv';
 
 // Vulcan AI Agent SDK — https://github.com/vulcan-ai/sdk
 var __defProp = Object.defineProperty;
@@ -830,7 +831,7 @@ var init_runner = __esm({
     AgentRunner = class {
       tracer;
       constructor(tracer) {
-        this.tracer = tracer ?? new VulcanTracer();
+        this.tracer = tracer ?? globalTracer;
       }
       /**
        * Run an agent to completion and return the final result.
@@ -1001,7 +1002,7 @@ var init_runner = __esm({
             turn: ctx.turn
           });
           if (response.toolCalls.length > 0) {
-            ctx.addMessage({ role: "assistant", content: response.content || "" });
+            ctx.addMessage({ role: "assistant", content: response.content || "", toolCalls: response.toolCalls });
             for (const toolCall of response.toolCalls) {
               if (toolCall.name.startsWith("handoff_to_")) {
                 const targetName = toolCall.name.replace("handoff_to_", "");
@@ -1230,7 +1231,7 @@ var init_runner = __esm({
           for (let attempt = 0; attempt <= maxRetries; attempt++) {
             try {
               const response = await provider.chat(messages, tools, {
-                model: config.model ?? "gemini-1.5-flash",
+                model: config.model ?? "gemini-2.5-flash",
                 temperature: options.temperature ?? config.temperature,
                 maxTokens: options.maxTokens ?? config.maxTokens,
                 responseFormat: config.outputSchema && config.reasoningMode !== "harness" ? "json_object" : "text"
@@ -1616,7 +1617,7 @@ var Agent = class {
       temperature: 0.7,
       reasoningMode: "standard",
       providerName: "gemini",
-      model: "gemini-1.5-flash",
+      model: "gemini-2.5-flash",
       tools: [],
       guardrails: [],
       handoffs: [],
@@ -1785,7 +1786,7 @@ var GeminiProvider = class extends BaseProvider {
     const geminiFunctionDeclarations = tools.length > 0 ? tools.map((t) => ({
       name: t.name,
       description: t.description,
-      parameters: zodToJsonSchema(t.inputSchema)
+      parameters: cleanGeminiSchema(zodToJsonSchema(t.inputSchema))
     })) : void 0;
     try {
       const requestBody = {
@@ -1841,6 +1842,11 @@ var GeminiProvider = class extends BaseProvider {
     const model = await this._getModel(config.model);
     const { system, rest } = this.extractSystemPrompt(messages);
     const geminiContents = this._toGeminiContents(rest);
+    const geminiFunctionDeclarations = tools.length > 0 ? tools.map((t) => ({
+      name: t.name,
+      description: t.description,
+      parameters: cleanGeminiSchema(zodToJsonSchema(t.inputSchema))
+    })) : void 0;
     try {
       const requestBody = {
         contents: geminiContents,
@@ -1848,6 +1854,9 @@ var GeminiProvider = class extends BaseProvider {
       };
       if (system) {
         requestBody.systemInstruction = { parts: [{ text: system }] };
+      }
+      if (geminiFunctionDeclarations) {
+        requestBody.tools = [{ functionDeclarations: geminiFunctionDeclarations }];
       }
       const { stream } = await model.generateContentStream(requestBody);
       for await (const chunk of stream) {
@@ -1862,10 +1871,41 @@ var GeminiProvider = class extends BaseProvider {
     }
   }
   _toGeminiContents(messages) {
-    return messages.filter((m) => m.role !== "system").map((m) => ({
-      role: m.role === "assistant" ? "model" : "user",
-      parts: [{ text: m.content }]
-    }));
+    return messages.filter((m) => m.role !== "system").map((m) => {
+      if (m.role === "tool") {
+        let parsedOutput = m.content;
+        try {
+          parsedOutput = JSON.parse(m.content);
+        } catch {
+        }
+        return {
+          role: "function",
+          parts: [
+            {
+              functionResponse: {
+                name: m.name ?? "",
+                response: typeof parsedOutput === "object" ? parsedOutput : { result: parsedOutput }
+              }
+            }
+          ]
+        };
+      }
+      if (m.role === "assistant" && m.toolCalls && m.toolCalls.length > 0) {
+        return {
+          role: "model",
+          parts: m.toolCalls.map((tc) => ({
+            functionCall: {
+              name: tc.name,
+              args: tc.arguments
+            }
+          }))
+        };
+      }
+      return {
+        role: m.role === "assistant" ? "model" : "user",
+        parts: [{ text: m.content || " " }]
+      };
+    });
   }
   modelCache = /* @__PURE__ */ new Map();
   genAI = null;
@@ -1903,6 +1943,18 @@ var GeminiProvider = class extends BaseProvider {
     return new ProviderError("gemini", String(e.message ?? error), status, status === 429);
   }
 };
+function cleanGeminiSchema(schema) {
+  if (schema === null || typeof schema !== "object") return schema;
+  if (Array.isArray(schema)) {
+    return schema.map(cleanGeminiSchema);
+  }
+  const cleaned = {};
+  for (const [key, value] of Object.entries(schema)) {
+    if (key === "additionalProperties") continue;
+    cleaned[key] = cleanGeminiSchema(value);
+  }
+  return cleaned;
+}
 providerRegistry.register("gemini", new GeminiProvider());
 
 // src/providers/openai.ts
@@ -2010,6 +2062,20 @@ var OpenAIProvider = class extends BaseProvider {
           role: "tool",
           content: m.content,
           tool_call_id: m.toolCallId ?? ""
+        };
+      }
+      if (m.role === "assistant" && m.toolCalls && m.toolCalls.length > 0) {
+        return {
+          role: "assistant",
+          content: m.content || "",
+          tool_calls: m.toolCalls.map((tc) => ({
+            id: tc.id,
+            type: "function",
+            function: {
+              name: tc.name,
+              arguments: JSON.stringify(tc.arguments)
+            }
+          }))
         };
       }
       return {
@@ -2332,6 +2398,7 @@ init_types();
 init_runner();
 init_tool();
 init_provider();
+dotenv.config();
 var Vulcan = {
   /**
    * Create a new agent.

@@ -35,7 +35,7 @@ export class GeminiProvider extends BaseProvider {
         ? tools.map((t) => ({
             name: t.name,
             description: t.description,
-            parameters: zodToJsonSchema(t.inputSchema),
+            parameters: cleanGeminiSchema(zodToJsonSchema(t.inputSchema)),
           }))
         : undefined
 
@@ -116,6 +116,14 @@ export class GeminiProvider extends BaseProvider {
     const model = await this._getModel(config.model)
     const { system, rest } = this.extractSystemPrompt(messages)
     const geminiContents = this._toGeminiContents(rest)
+    const geminiFunctionDeclarations =
+      tools.length > 0
+        ? tools.map((t) => ({
+            name: t.name,
+            description: t.description,
+            parameters: cleanGeminiSchema(zodToJsonSchema(t.inputSchema)),
+          }))
+        : undefined
 
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -125,6 +133,9 @@ export class GeminiProvider extends BaseProvider {
       }
       if (system) {
         requestBody.systemInstruction = { parts: [{ text: system }] }
+      }
+      if (geminiFunctionDeclarations) {
+        requestBody.tools = [{ functionDeclarations: geminiFunctionDeclarations }]
       }
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -147,10 +158,43 @@ export class GeminiProvider extends BaseProvider {
   private _toGeminiContents(messages: Message[]): GeminiContent[] {
     return messages
       .filter((m) => m.role !== 'system')
-      .map((m) => ({
-        role: m.role === 'assistant' ? 'model' : 'user',
-        parts: [{ text: m.content }],
-      }))
+      .map((m) => {
+        if (m.role === 'tool') {
+          let parsedOutput = m.content
+          try {
+            parsedOutput = JSON.parse(m.content)
+          } catch {
+            // Keep as string if not JSON
+          }
+
+          return {
+            role: 'function',
+            parts: [
+              {
+                functionResponse: {
+                  name: m.name ?? '',
+                  response: typeof parsedOutput === 'object' ? parsedOutput : { result: parsedOutput },
+                },
+              },
+            ],
+          }
+        }
+        if (m.role === 'assistant' && m.toolCalls && m.toolCalls.length > 0) {
+          return {
+            role: 'model',
+            parts: m.toolCalls.map((tc) => ({
+              functionCall: {
+                name: tc.name,
+                args: tc.arguments,
+              },
+            })),
+          }
+        }
+        return {
+          role: m.role === 'assistant' ? 'model' : 'user',
+          parts: [{ text: m.content || ' ' }],
+        }
+      })
   }
 
   private modelCache = new Map<string, GeminiInstance>()
@@ -205,8 +249,22 @@ export class GeminiProvider extends BaseProvider {
 type GeminiInstance = any
 
 interface GeminiContent {
-  role: 'user' | 'model'
-  parts: { text: string }[]
+  role: string
+  parts: any[]
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function cleanGeminiSchema(schema: any): any {
+  if (schema === null || typeof schema !== 'object') return schema
+  if (Array.isArray(schema)) {
+    return schema.map(cleanGeminiSchema)
+  }
+  const cleaned: Record<string, any> = {}
+  for (const [key, value] of Object.entries(schema)) {
+    if (key === 'additionalProperties') continue
+    cleaned[key] = cleanGeminiSchema(value)
+  }
+  return cleaned
 }
 
 // Auto-register when imported
