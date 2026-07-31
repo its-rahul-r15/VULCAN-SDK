@@ -23,12 +23,11 @@ export function LandingPage({ onViewChange }) {
           {/* Hero Left Column */}
           <div className="lg:col-span-6 flex flex-col items-center lg:items-start">
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-white leading-none">
-              The agentic layer <br className="hidden sm:inline" />
-              for building workflows <br className="hidden sm:inline" />
-              on <span className="bg-gradient-to-r from-accent-orange to-accent-amber bg-clip-text text-transparent">Gemini</span>
+              Type-safe AI agents. <br className="hidden sm:inline" />
+              <span className="bg-gradient-to-r from-accent-orange to-accent-amber bg-clip-text text-transparent">Zero framework bloat.</span>
             </h1>
             <p className="mt-6 max-w-md text-base sm:text-lg text-neutral-400 leading-relaxed text-center lg:text-left">
-              A production-grade TypeScript SDK for building autonomous agents with structured reasoning, type-safe tools, multi-agent handoffs, and real-time streaming.
+              Build resilient, multi-turn agent workflows with Zod-validated tools, cycle-blocking handoffs, and custom guardrails.
             </p>
             
             {/* CTA Buttons */}
