@@ -168,8 +168,13 @@ pre, code {
   font-family: var(--font-mono);
 }
 
-/* ── Testimonials Horizontal Marquee Animation ── */
+/* ── Testimonials & Companies Horizontal Marquee Animation ── */
 @keyframes marqueeScroll {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+@keyframes marqueeCompanies {
   0% { transform: translateX(0); }
   100% { transform: translateX(-50%); }
 }
@@ -180,7 +185,14 @@ pre, code {
   animation: marqueeScroll 45s linear infinite;
 }
 
-.animate-marquee:hover {
+.animate-marquee-companies {
+  display: flex;
+  width: max-content;
+  align-items: center;
+  animation: marqueeCompanies 32s linear infinite;
+}
+
+.animate-marquee:hover, .animate-marquee-companies:hover {
   animation-play-state: paused;
 }
 
@@ -191,3 +203,17 @@ pre, code {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+/* Production-level SaaS Glassmorphism and Glow Helpers */
+.glass-card {
+  background: rgba(10, 10, 10, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.light .glass-card {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+

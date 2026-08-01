@@ -1,0 +1,16 @@
+{
+  "name": "Vulcan SDK",
+  "short_name": "Vulcan",
+  "description": "Production-grade, multi-provider AI Agent SDK for TypeScript.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#0070f3",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}

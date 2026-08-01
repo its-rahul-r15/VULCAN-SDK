@@ -3,6 +3,7 @@ import React, { useState } from 'react'
 export function Header({ currentView, onViewChange, theme, onToggleTheme }) {
   const isDark = theme === 'dark'
   const [bannerVisible, setBannerVisible] = useState(true)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   return (
     <div className={`sticky top-0 z-50 w-full transition-colors duration-200`}>
@@ -12,18 +13,21 @@ export function Header({ currentView, onViewChange, theme, onToggleTheme }) {
         <div style={{
           background: isDark ? '#0a0a0a' : '#171717',
           borderBottom: `1px solid ${isDark ? '#1f1f1f' : '#2a2a2a'}`,
-          padding: '7px 24px',
+          padding: '6px 16px',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          gap: '10px',
+          gap: '8px',
           position: 'relative',
         }}>
-          <span style={{ color: '#0070f3', fontSize: '11px', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>
+          <span style={{ color: '#0070f3', fontSize: '11px', fontFamily: 'var(--font-mono)', fontWeight: 700, flexShrink: 0 }}>
             ⚡ NEW v1.1.0
           </span>
-          <span style={{ color: '#a1a1a1', fontSize: '12px', letterSpacing: '0.01em' }}>
+          <span className="hidden md:inline" style={{ color: '#a1a1a1', fontSize: '12px', letterSpacing: '0.01em' }}>
             Vulcan v1.1.0 is live on npm — Built-in Tools (Web Search, Scraper, Sandbox, SQL, RAG) & HITL Approvals.
+          </span>
+          <span className="inline md:hidden" style={{ color: '#a1a1a1', fontSize: '11.5px', letterSpacing: '0.01em' }}>
+            Vulcan v1.1.0 live on npm — Tools & HITL
           </span>
           <a
             href="https://www.npmjs.com/package/vulcan-agentic-sdk"
@@ -31,21 +35,21 @@ export function Header({ currentView, onViewChange, theme, onToggleTheme }) {
             rel="noopener noreferrer"
             style={{
               color: '#ffffff',
-              fontSize: '11.5px',
+              fontSize: '11px',
               fontWeight: 600,
               textDecoration: 'none',
               borderBottom: '1px solid #444',
               paddingBottom: '1px',
-              transition: 'border-color 0.15s',
+              flexShrink: 0,
             }}
           >
-            View on npm →
+            View →
           </a>
           <button
             onClick={() => setBannerVisible(false)}
             style={{
               position: 'absolute',
-              right: '16px',
+              right: '12px',
               color: '#555',
               background: 'none',
               border: 'none',
@@ -66,12 +70,12 @@ export function Header({ currentView, onViewChange, theme, onToggleTheme }) {
           ? 'border-[#262626] bg-black/90 backdrop-blur-md text-white'
           : 'border-[#ebebeb] bg-white/90 backdrop-blur-md text-[#171717]'
         }`}>
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
+        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
 
           {/* Left Logo */}
-          <div className="flex items-center gap-8">
+          <div className="flex items-center gap-6 md:gap-8">
             <button
-              onClick={() => onViewChange('landing')}
+              onClick={() => { onViewChange('landing'); setMobileMenuOpen(false) }}
               className="flex items-center gap-2.5 font-semibold tracking-tight transition hover:opacity-80"
             >
               <div className={`h-5 w-5 flex items-center justify-center [clip-path:polygon(50%_0%,_0%_100%,_100%_100%)] ${isDark ? 'bg-white' : 'bg-[#171717]'}`} />
@@ -116,7 +120,7 @@ export function Header({ currentView, onViewChange, theme, onToggleTheme }) {
           </div>
 
           {/* Right CTA / npm / GitHub / Theme Toggle */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
 
             {/* Theme Toggle */}
             <button
@@ -144,7 +148,7 @@ export function Header({ currentView, onViewChange, theme, onToggleTheme }) {
               href="https://www.npmjs.com/package/vulcan-agentic-sdk"
               target="_blank"
               rel="noopener noreferrer"
-              className={`p-1.5 transition flex items-center gap-1 ${isDark ? 'text-[#a1a1a1] hover:text-white' : 'text-[#4d4d4d] hover:text-[#171717]'}`}
+              className={`p-1.5 transition hidden sm:flex items-center gap-1 ${isDark ? 'text-[#a1a1a1] hover:text-white' : 'text-[#4d4d4d] hover:text-[#171717]'}`}
               title="npm package"
               aria-label="npm package"
             >
@@ -158,7 +162,7 @@ export function Header({ currentView, onViewChange, theme, onToggleTheme }) {
               href="https://github.com/its-rahul-r15/VULCAN-SDK"
               target="_blank"
               rel="noopener noreferrer"
-              className={`p-1.5 transition ${isDark ? 'text-[#a1a1a1] hover:text-white' : 'text-[#4d4d4d] hover:text-[#171717]'}`}
+              className={`p-1.5 transition hidden sm:flex ${isDark ? 'text-[#a1a1a1] hover:text-white' : 'text-[#4d4d4d] hover:text-[#171717]'}`}
               aria-label="GitHub Repository"
             >
               <svg className="h-5 w-5 fill-current" viewBox="0 0 16 16">
@@ -176,9 +180,84 @@ export function Header({ currentView, onViewChange, theme, onToggleTheme }) {
             >
               Get Started
             </button>
+
+            {/* Mobile Hamburger Button */}
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className={`md:hidden p-1.5 rounded-md border transition flex items-center justify-center ${isDark
+                  ? 'border-[#333333] bg-[#111111] text-white hover:bg-[#1f1f1f]'
+                  : 'border-[#ebebeb] bg-[#f5f5f5] text-[#171717] hover:bg-[#ebebeb]'
+                }`}
+              aria-label="Toggle Mobile Navigation"
+            >
+              {mobileMenuOpen ? (
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              ) : (
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+              )}
+            </button>
           </div>
         </div>
+
+        {/* Mobile Navigation Drawer Dropdown */}
+        {mobileMenuOpen && (
+          <div className={`md:hidden border-b px-4 py-4 space-y-3 transition-all ${isDark ? 'bg-black/95 border-[#262626] text-white' : 'bg-white/95 border-[#ebebeb] text-[#171717]'}`}>
+            <div className="flex flex-col gap-2">
+              <button
+                onClick={() => { onViewChange('landing'); setMobileMenuOpen(false) }}
+                className={`w-full text-left px-3 py-2 rounded-md text-sm font-medium transition ${currentView === 'landing'
+                    ? (isDark ? 'bg-[#1f1f1f] text-white' : 'bg-[#f5f5f5] text-[#171717]')
+                    : (isDark ? 'text-[#a1a1a1] hover:text-white' : 'text-[#4d4d4d] hover:text-[#171717]')
+                  }`}
+              >
+                Overview
+              </button>
+              <button
+                onClick={() => { onViewChange('docs'); setMobileMenuOpen(false) }}
+                className={`w-full text-left px-3 py-2 rounded-md text-sm font-medium transition ${currentView === 'docs'
+                    ? (isDark ? 'bg-[#1f1f1f] text-white' : 'bg-[#f5f5f5] text-[#171717]')
+                    : (isDark ? 'text-[#a1a1a1] hover:text-white' : 'text-[#4d4d4d] hover:text-[#171717]')
+                  }`}
+              >
+                Documentation
+              </button>
+            </div>
+
+            <div className="pt-2 border-t border-[#262626] flex items-center justify-between">
+              <a
+                href="https://www.npmjs.com/package/vulcan-agentic-sdk"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs font-mono text-blue-400 hover:underline flex items-center gap-1"
+              >
+                <span>npm package</span>
+                <span>v1.1.0 ↗</span>
+              </a>
+              <a
+                href="https://github.com/its-rahul-r15/VULCAN-SDK"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs font-mono text-gray-400 hover:underline flex items-center gap-1"
+              >
+                <span>GitHub</span>
+                <span>↗</span>
+              </a>
+            </div>
+
+            <button
+              onClick={() => { onViewChange('docs'); setMobileMenuOpen(false) }}
+              className="w-full py-2 bg-[#0070f3] hover:bg-blue-600 text-white rounded-lg text-xs font-semibold text-center transition"
+            >
+              Get Started with Vulcan SDK
+            </button>
+          </div>
+        )}
       </header>
     </div>
   )
 }
+

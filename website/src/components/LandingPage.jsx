@@ -1,6 +1,18 @@
 import React, { useState } from 'react'
 import { InteractiveSandbox } from './InteractiveSandbox'
 
+// ── Companies / Partner Tech List for Infinite Horizontal Marquee ───────────
+const COMPANIES_LIST = [
+  { name: 'Google Gemini', type: 'gemini', label: 'Google Gemini' },
+  { name: 'OpenAI', type: 'openai', label: 'OpenAI' },
+  { name: 'Anthropic', type: 'anthropic', label: 'Anthropic' },
+  { name: 'Meta Llama', type: 'meta', label: 'Meta Llama 3' },
+  { name: 'Mistral AI', type: 'mistral', label: 'Mistral AI' },
+  { name: 'TypeScript', type: 'ts', label: 'TypeScript' },
+  { name: 'Zod Validation', type: 'zod', label: 'Zod Schema' },
+  { name: 'Node.js', type: 'node', label: 'Node.js' },
+]
+
 // ── Models list for Hero Selector ──────────────────────────────────────────
 // Real Vulcan SDK supported models only
 const HERO_MODELS = [
@@ -262,6 +274,21 @@ const FEATURES = [
     desc: 'Every LLM call, tool invocation, and handoff recorded. Export as JSON or pretty-print to terminal.',
     snippet: { keyword: 'globalTracer.export', rest: '(trace, "pretty")' }
   },
+  {
+    num: '07', tag: 'Persistent', title: 'SQLite Session Storage',
+    desc: 'Persist multi-turn conversation states across restarts with zero database setup overhead.',
+    snippet: { keyword: 'createSQLiteStorage', rest: '({ dbPath: "./sessions.db" })' }
+  },
+  {
+    num: '08', tag: 'Real-time', title: 'Event Streaming API',
+    desc: 'Stream LLM tokens, step events, and tool execution logs directly to frontend UIs in real-time.',
+    snippet: { keyword: 'for await (const chunk', rest: 'of Vulcan.stream(...))' }
+  },
+  {
+    num: '09', tag: 'Universal', title: 'Multi-LLM Provider Gateway',
+    desc: 'Switch seamlessly between Google Gemini, OpenAI GPT-4o, and Anthropic Claude Sonnet with 1 line.',
+    snippet: { keyword: 'model: ', rest: '"google/gemini-2.5-flash"' }
+  },
 ]
 
 export function LandingPage({ onViewChange, theme }) {
@@ -272,6 +299,7 @@ export function LandingPage({ onViewChange, theme }) {
   const [searchQuery, setSearchQuery] = useState('')
   const [useGateway, setUseGateway] = useState(true)
   const [heroModelOpen, setHeroModelOpen] = useState(false)
+  const [mobileCompareTab, setMobileCompareTab] = useState('vulcan')
 
   const copyInstall = () => {
     navigator.clipboard.writeText('npm install vulcan-agentic-sdk')
@@ -418,31 +446,17 @@ export function LandingPage({ onViewChange, theme }) {
               position: 'relative',
             }}>
               {/* Top Tabs (Vercel Style) */}
-              <div style={{
-                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                borderBottom: '1px solid #1a1a1a', background: '#000000',
-              }}>
-                <div style={{ display: 'flex', borderRight: '1px solid #1a1a1a' }}>
-                  {['Text', 'Tools', 'Handoffs', 'Guardrails', 'Streaming'].map((tab, idx) => {
+              <div className="flex items-center justify-between border-b border-[#1a1a1a] bg-black overflow-x-auto horizontal-scroll-hide-scrollbar">
+                <div className="flex border-r border-[#1a1a1a] min-w-max">
+                  {['Text', 'Tools', 'Handoffs', 'Guardrails', 'Streaming'].map((tab) => {
                     const isActive = heroTab === tab
                     return (
                       <button
                         key={tab}
                         onClick={() => setHeroTab(tab)}
-                        style={{
-                          padding: '9px 18px',
-                          fontSize: '12.5px',
-                          fontFamily: 'system-ui, -apple-system, sans-serif',
-                          fontWeight: isActive ? 600 : 400,
-                          background: isActive ? '#111111' : 'transparent',
-                          border: 'none',
-                          borderRight: '1px solid #1a1a1a',
-                          cursor: 'pointer',
-                          color: isActive ? '#ffffff' : '#777777',
-                          transition: 'background 0.15s, color 0.15s',
-                        }}
-                        onMouseEnter={e => { if (!isActive) e.currentTarget.style.color = '#cccccc' }}
-                        onMouseLeave={e => { if (!isActive) e.currentTarget.style.color = '#777777' }}
+                        className={`px-3.5 sm:px-4 py-2 text-[12px] font-sans transition border-r border-[#1a1a1a] cursor-pointer whitespace-nowrap ${
+                          isActive ? 'bg-[#111111] text-white font-semibold' : 'bg-transparent text-[#777777] hover:text-[#cccccc]'
+                        }`}
                       >{tab}</button>
                     )
                   })}
@@ -450,15 +464,15 @@ export function LandingPage({ onViewChange, theme }) {
               </div>
 
               {/* Code Body with Line Numbers */}
-              <div style={{ padding: '18px 20px 22px', height: '265px', overflowY: 'auto', overflowX: 'auto', background: '#000' }}>
-                <pre style={{ margin: 0, fontSize: '12.5px', lineHeight: '1.75', fontFamily: 'var(--font-mono)' }}>
+              <div style={{ padding: '16px 18px 20px', height: '265px', overflowY: 'auto', overflowX: 'auto', background: '#000' }}>
+                <pre style={{ margin: 0, fontSize: '12px', lineHeight: '1.75', fontFamily: 'var(--font-mono)' }}>
                   {(() => {
                     const codeStr = getHeroCodeString(heroTab, selectedModel.id)
                     const lines = codeStr.split('\n')
                     return (
-                      <div style={{ display: 'flex', gap: '16px' }}>
-                        {/* Line numbers column */}
-                        <div style={{ userSelect: 'none', opacity: 0.35, textAlign: 'right', minWidth: '16px', color: '#888' }}>
+                      <div style={{ display: 'flex', gap: '14px' }}>
+                        {/* Line numbers column - hidden on small mobile screens */}
+                        <div className="hidden sm:block" style={{ userSelect: 'none', opacity: 0.35, textAlign: 'right', minWidth: '16px', color: '#888' }}>
                           {lines.map((_, i) => (
                             <div key={i}>{i + 1}</div>
                           ))}
@@ -502,11 +516,7 @@ export function LandingPage({ onViewChange, theme }) {
               </div>
 
               {/* Bottom Control Bar */}
-              <div style={{
-                borderTop: '1px solid #1a1a1a', background: '#0a0a0a',
-                padding: '10px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                borderRadius: '0 0 10px 10px',
-              }}>
+              <div className="border-t border-[#1a1a1a] bg-[#0a0a0a] px-3.5 py-2.5 flex flex-wrap items-center justify-between gap-2.5 rounded-b-[10px]">
                 {/* Model Trigger — dropdown anchors here */}
                 <div style={{ position: 'relative' }}>
                   <button
@@ -648,14 +658,16 @@ export function LandingPage({ onViewChange, theme }) {
           </div>
         </div>
 
-        {/* ── Trust logos band (Monochrome Company Logos) ── */}
+        {/* ── Trust logos band (Monochrome Horizontal Infinite Marquee Slider for Desktop & Mobile) ── */}
         <div style={{
-          marginTop: '64px',
+          marginTop: '56px',
           borderTop: `1px solid ${s.border}`,
-          paddingTop: '32px',
+          paddingTop: '28px',
           display: 'flex',
           flexDirection: 'column',
           gap: '16px',
+          overflow: 'hidden',
+          position: 'relative',
         }}>
           <div style={{
             fontFamily: 'var(--font-mono)',
@@ -668,144 +680,90 @@ export function LandingPage({ onViewChange, theme }) {
           }}>
             WORKS WITH & POWERED BY
           </div>
-          <div style={{
-            display: 'flex',
-            flexWrap: 'wrap',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: '24px 36px',
-            padding: '4px 0',
-          }}>
-            {/* Google Gemini */}
-            <div
-              style={{
-                color: isDark ? '#ffffff' : '#171717',
-                opacity: isDark ? 0.85 : 0.8,
-                transition: 'opacity 0.2s, transform 0.2s',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                cursor: 'pointer',
-              }}
-              onMouseEnter={e => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.transform = 'translateY(-1px)' }}
-              onMouseLeave={e => { e.currentTarget.style.opacity = isDark ? '0.85' : '0.8'; e.currentTarget.style.transform = 'translateY(0)' }}
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 0C12 6.627 6.627 12 0 12C6.627 12 12 17.373 12 24C12 17.373 17.373 12 24 12C17.373 12 12 6.627 12 0Z" />
-              </svg>
-              <span style={{ fontWeight: 650, fontSize: '15px', letterSpacing: '-0.3px', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
-                Google <span style={{ fontWeight: 400, opacity: 0.8 }}>Gemini</span>
-              </span>
-            </div>
 
-            {/* OpenAI */}
-            <div
-              style={{
-                color: isDark ? '#ffffff' : '#171717',
-                opacity: isDark ? 0.85 : 0.8,
-                transition: 'opacity 0.2s, transform 0.2s',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                cursor: 'pointer',
-              }}
-              onMouseEnter={e => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.transform = 'translateY(-1px)' }}
-              onMouseLeave={e => { e.currentTarget.style.opacity = isDark ? '0.85' : '0.8'; e.currentTarget.style.transform = 'translateY(0)' }}
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M22.2819 9.8211a5.9847 5.9847 0 0 0-.5157-4.9108 6.0462 6.0462 0 0 0-6.5098-2.9A6.0651 6.0651 0 0 0 4.9807 4.1818a5.9847 5.9847 0 0 0-3.9977 2.9 6.0462 6.0462 0 0 0 .7427 7.0966 5.98 5.98 0 0 0 .511 4.9107 6.051 6.051 0 0 0 6.5146 2.9001A5.9847 5.9847 0 0 0 13.2599 24a6.0557 6.0557 0 0 0 5.7718-4.2058 5.9894 5.9894 0 0 0 3.9977-2.9001 6.0557 6.0557 0 0 0-.7475-7.0729zm-9.022 12.6081a4.4755 4.4755 0 0 1-2.8764-1.0408l.1419-.0804 4.7783-2.7582a.7948.7948 0 0 0 .3927-.6813v-6.7369l2.02 1.1686a.071.071 0 0 1 .038.052v5.5826a4.504 4.504 0 0 1-4.4945 4.4944zm-9.6607-4.1254a4.4708 4.4708 0 0 1-.535-3.0137l.142.0852 4.783 2.7582a.7712.7712 0 0 0 .7806 0l5.8428-3.3685v2.3324a.0804.0804 0 0 1-.0332.0615L11.74 19.9542a4.4992 4.4992 0 0 1-6.1408-1.6504zm-1.562-9.6006a4.4755 4.4755 0 0 1 2.3414-1.9735V12.491a.7854.7854 0 0 0 .3927.6813l5.8334 3.3685-2.02 1.1686a.071.071 0 0 1-.0615.0047l-4.8398-2.7913a4.504 4.504 0 0 1-1.6462-6.1428zm13.4735-3.08a4.4708 4.4708 0 0 1 .535 3.0136l-.142-.0852-4.783-2.7582a.7712.7712 0 0 0-.7806 0L4.54 9.6644V7.332a.0804.0804 0 0 1 .0332-.0615l4.783-2.763a4.4992 4.4992 0 0 1 6.1408 1.6505zm1.562 9.6006a4.4755 4.4755 0 0 1-2.3414 1.9735v-5.7607a.7854.7854 0 0 0-.3927-.6813L13.52 10.49l2.02-1.1686a.071.071 0 0 1 .0615-.0047l4.8398 2.7913a4.504 4.504 0 0 1 1.6462 6.1428zM12 13.9142l-3.321-1.9168 3.321-1.9168 3.321 1.9168z" />
-              </svg>
-              <span style={{ fontWeight: 700, fontSize: '16px', letterSpacing: '-0.4px', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
-                OpenAI
-              </span>
-            </div>
+          {/* Marquee Container with Left & Right Gradient Blur Overlays */}
+          <div style={{ position: 'relative', width: '100%', overflow: 'hidden' }}>
+            {/* Left Edge Gradient Fade */}
+            <div style={{
+              position: 'absolute', top: 0, bottom: 0, left: 0, width: '80px', zIndex: 10,
+              pointerEvents: 'none',
+              background: `linear-gradient(to right, ${s.sectionBg} 0%, transparent 100%)`,
+            }} />
 
-            {/* Anthropic */}
-            <div
-              style={{
-                color: isDark ? '#ffffff' : '#171717',
-                opacity: isDark ? 0.85 : 0.8,
-                transition: 'opacity 0.2s, transform 0.2s',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                cursor: 'pointer',
-              }}
-              onMouseEnter={e => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.transform = 'translateY(-1px)' }}
-              onMouseLeave={e => { e.currentTarget.style.opacity = isDark ? '0.85' : '0.8'; e.currentTarget.style.transform = 'translateY(0)' }}
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M17.472 3.003h-3.644L7.544 20.997h3.644l1.378-3.791h5.811l1.378 3.791h3.644L17.472 3.003zm-3.69 11.236l2.122-5.834 2.122 5.834h-4.244zM2.6 20.997h3.644L12.528 3.003H8.884L2.6 20.997z" />
-              </svg>
-              <span style={{ fontWeight: 600, fontSize: '15.5px', letterSpacing: '-0.2px', fontFamily: 'Georgia, serif', fontStyle: 'italic' }}>
-                Anthropic
-              </span>
-            </div>
+            {/* Right Edge Gradient Fade */}
+            <div style={{
+              position: 'absolute', top: 0, bottom: 0, right: 0, width: '80px', zIndex: 10,
+              pointerEvents: 'none',
+              background: `linear-gradient(to left, ${s.sectionBg} 0%, transparent 100%)`,
+            }} />
 
-            {/* TypeScript */}
-            <div
-              style={{
-                color: isDark ? '#ffffff' : '#171717',
-                opacity: isDark ? 0.85 : 0.8,
-                transition: 'opacity 0.2s, transform 0.2s',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '7px',
-                cursor: 'pointer',
-              }}
-              onMouseEnter={e => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.transform = 'translateY(-1px)' }}
-              onMouseLeave={e => { e.currentTarget.style.opacity = isDark ? '0.85' : '0.8'; e.currentTarget.style.transform = 'translateY(0)' }}
-            >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M1.125 0C.507 0 0 .507 0 1.125v21.75C0 23.493.507 24 1.125 24h21.75c.618 0 1.125-.507 1.125-1.125V1.125C24 .507 23.493 0 22.875 0H1.125zm17.363 9.75c.612 0 1.154.037 1.627.111a6.38 6.38 0 0 1 1.306.34v2.458a3.95 3.95 0 0 0-.643-.361 5.093 5.093 0 0 0-.79-.263 6.814 6.814 0 0 0-.916-.165 6.13 6.13 0 0 0-1.022-.075c-.504 0-.9.083-1.189.25-.288.166-.432.427-.432.783 0 .23.056.417.168.562.112.145.267.266.465.362.198.096.435.18.71.25.277.072.587.149.93.232.493.118.948.261 1.365.43.417.168.77.387 1.058.657.288.27.506.597.654.981.148.384.222.846.222 1.387 0 .762-.162 1.41-.486 1.944a4.343 4.343 0 0 1-1.353 1.373c-.58.337-1.272.576-2.077.717-.805.141-1.685.212-2.64.212-.876 0-1.7-.08-2.472-.24a10.026 10.026 0 0 1-2.037-.674v-2.64c.732.435 1.5.766 2.304.993.805.227 1.62.34 2.447.34.54 0 .977-.087 1.312-.262.335-.175.503-.45.503-.825 0-.255-.062-.46-.188-.615a1.8 1.8 0 0 0-.495-.412c-.205-.105-.445-.195-.72-.27-.275-.075-.572-.152-.892-.232-.51-.128-.977-.282-1.402-.462a3.844 3.844 0 0 1-1.088-.705 2.87 2.87 0 0 1-.682-1.012c-.158-.415-.237-.91-.237-1.485 0-.743.167-1.373.502-1.89.335-.518.803-.934 1.403-1.248.6-.315 1.315-.536 2.145-.664.83-.128 1.738-.192 2.723-.192zm-8.895 2.37v11.755H6.555V12.12H2.25V9.875h12.72v2.245H9.593z" />
-              </svg>
-              <span style={{ fontWeight: 600, fontSize: '14.5px', letterSpacing: '-0.3px', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
-                TypeScript
-              </span>
-            </div>
-
-            {/* Zod */}
-            <div
-              style={{
-                color: isDark ? '#ffffff' : '#171717',
-                opacity: isDark ? 0.85 : 0.8,
-                transition: 'opacity 0.2s, transform 0.2s',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '7px',
-                cursor: 'pointer',
-              }}
-              onMouseEnter={e => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.transform = 'translateY(-1px)' }}
-              onMouseLeave={e => { e.currentTarget.style.opacity = isDark ? '0.85' : '0.8'; e.currentTarget.style.transform = 'translateY(0)' }}
-            >
-              <svg width="19" height="19" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M3.75 3h16.5A.75.75 0 0121 3.75v3a.75.75 0 01-.75.75H8.31l12.19 11.25a.75.75 0 01.25.55v4.2a.75.75 0 01-.75.75H3.75a.75.75 0 01-.75-.75v-3a.75.75 0 01.75-.75h11.94L3.5 8.55A.75.75 0 013.25 8V3.75A.75.75 0 013.75 3z" />
-              </svg>
-              <span style={{ fontWeight: 700, fontSize: '15.5px', letterSpacing: '0.4px', fontFamily: 'var(--font-mono)' }}>
-                ZOD
-              </span>
-            </div>
-
-            {/* Node.js */}
-            <div
-              style={{
-                color: isDark ? '#ffffff' : '#171717',
-                opacity: isDark ? 0.85 : 0.8,
-                transition: 'opacity 0.2s, transform 0.2s',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '7px',
-                cursor: 'pointer',
-              }}
-              onMouseEnter={e => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.transform = 'translateY(-1px)' }}
-              onMouseLeave={e => { e.currentTarget.style.opacity = isDark ? '0.85' : '0.8'; e.currentTarget.style.transform = 'translateY(0)' }}
-            >
-              <svg width="19" height="19" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 1.5a1.5 1.5 0 0 0-.75.2l-8.25 4.76A1.5 1.5 0 0 0 2.25 7.76v9.48a1.5 1.5 0 0 0 .75 1.3l8.25 4.76a1.5 1.5 0 0 0 1.5 0l8.25-4.76a1.5 1.5 0 0 0 .75-1.3V7.76a1.5 1.5 0 0 0-.75-1.3L12.75 1.7A1.5 1.5 0 0 0 12 1.5zm-1.5 6.75h3a.75.75 0 0 1 .75.75v6a.75.75 0 0 1-.75.75h-3a.75.75 0 0 1-.75-.75v-6a.75.75 0 0 1 .75-.75z" />
-              </svg>
-              <span style={{ fontWeight: 650, fontSize: '15px', letterSpacing: '-0.3px', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
-                Node.js
-              </span>
+            {/* Infinite Horizontal Scrolling Track */}
+            <div className="horizontal-scroll-hide-scrollbar" style={{ width: '100%', overflowX: 'auto' }}>
+              <div className="animate-marquee-companies" style={{ gap: '40px', paddingRight: '40px' }}>
+                {/* Triple list for continuous smooth infinite loop */}
+                {[...COMPANIES_LIST, ...COMPANIES_LIST, ...COMPANIES_LIST].map((item, idx) => (
+                  <div
+                    key={`${item.name}-${idx}`}
+                    style={{
+                      color: isDark ? '#ffffff' : '#171717',
+                      opacity: isDark ? 0.85 : 0.8,
+                      transition: 'opacity 0.2s, transform 0.2s',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '9px',
+                      cursor: 'pointer',
+                      whiteSpace: 'nowrap',
+                      flexShrink: 0,
+                    }}
+                    onMouseEnter={e => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.transform = 'translateY(-1px)' }}
+                    onMouseLeave={e => { e.currentTarget.style.opacity = isDark ? '0.85' : '0.8'; e.currentTarget.style.transform = 'translateY(0)' }}
+                  >
+                    {item.type === 'gemini' && (
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 0C12 6.627 6.627 12 0 12C6.627 12 12 17.373 12 24C12 17.373 17.373 12 24 12C17.373 12 12 6.627 12 0Z" />
+                      </svg>
+                    )}
+                    {item.type === 'openai' && (
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M22.2819 9.8211a5.9847 5.9847 0 0 0-.5157-4.9108 6.0462 6.0462 0 0 0-6.5098-2.9A6.0651 6.0651 0 0 0 4.9807 4.1818a5.9847 5.9847 0 0 0-3.9977 2.9 6.0462 6.0462 0 0 0 .7427 7.0966 5.98 5.98 0 0 0 .511 4.9107 6.051 6.051 0 0 0 6.5146 2.9001A5.9847 5.9847 0 0 0 13.2599 24a6.0557 6.0557 0 0 0 5.7718-4.2058 5.9894 5.9894 0 0 0 3.9977-2.9001 6.0557 6.0557 0 0 0-.7475-7.0729zm-9.022 12.6081a4.4755 4.4755 0 0 1-2.8764-1.0408l.1419-.0804 4.7783-2.7582a.7948.7948 0 0 0 .3927-.6813v-6.7369l2.02 1.1686a.071.071 0 0 1 .038.052v5.5826a4.504 4.504 0 0 1-4.4945 4.4944zm-9.6607-4.1254a4.4708 4.4708 0 0 1-.535-3.0137l.142.0852 4.783 2.7582a.7712.7712 0 0 0 .7806 0l5.8428-3.3685v2.3324a.0804.0804 0 0 1-.0332.0615L11.74 19.9542a4.4992 4.4992 0 0 1-6.1408-1.6504zm-1.562-9.6006a4.4755 4.4755 0 0 1 2.3414-1.9735V12.491a.7854.7854 0 0 0 .3927.6813l5.8334 3.3685-2.02 1.1686a.071.071 0 0 1-.0615.0047l-4.8398-2.7913a4.504 4.504 0 0 1-1.6462-6.1428zm13.4735-3.08a4.4708 4.4708 0 0 1 .535 3.0136l-.142-.0852-4.783-2.7582a.7712.7712 0 0 0-.7806 0L4.54 9.6644V7.332a.0804.0804 0 0 1 .0332-.0615l4.783-2.763a4.4992 4.4992 0 0 1 6.1408 1.6505zm1.562 9.6006a4.4755 4.4755 0 0 1-2.3414 1.9735v-5.7607a.7854.7854 0 0 0-.3927-.6813L13.52 10.49l2.02-1.1686a.071.071 0 0 1 .0615-.0047l4.8398 2.7913a4.504 4.504 0 0 1 1.6462 6.1428zM12 13.9142l-3.321-1.9168 3.321-1.9168 3.321 1.9168z" />
+                      </svg>
+                    )}
+                    {item.type === 'anthropic' && (
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M17.472 3.003h-3.644L7.544 20.997h3.644l1.378-3.791h5.811l1.378 3.791h3.644L17.472 3.003zm-3.69 11.236l2.122-5.834 2.122 5.834h-4.244zM2.6 20.997h3.644L12.528 3.003H8.884L2.6 20.997z" />
+                      </svg>
+                    )}
+                    {item.type === 'meta' && (
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm1 14.5h-2v-5h2v5zm0-7h-2V7.5h2v2z" />
+                      </svg>
+                    )}
+                    {item.type === 'mistral' && (
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M4 4h4v4H4V4zm12 0h4v4h-4V4zM4 10h4v4H4v-4zm6 0h4v4h-4v-4zm6 0h4v4h-4v-4zM4 16h4v4H4v-4zm12 0h4v4h-4v-4z" />
+                      </svg>
+                    )}
+                    {item.type === 'ts' && (
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M1.125 0C.507 0 0 .507 0 1.125v21.75C0 23.493.507 24 1.125 24h21.75c.618 0 1.125-.507 1.125-1.125V1.125C24 .507 23.493 0 22.875 0H1.125zm17.363 9.75c.612 0 1.154.037 1.627.111a6.38 6.38 0 0 1 1.306.34v2.458a3.95 3.95 0 0 0-.643-.361 5.093 5.093 0 0 0-.79-.263 6.814 6.814 0 0 0-.916-.165 6.13 6.13 0 0 0-1.022-.075c-.504 0-.9.083-1.189.25-.288.166-.432.427-.432.783 0 .23.056.417.168.562.112.145.267.266.465.362.198.096.435.18.71.25.277.072.587.149.93.232.493.118.948.261 1.365.43.417.168.77.387 1.058.657.288.27.506.597.654.981.148.384.222.846.222 1.387 0 .762-.162 1.41-.486 1.944a4.343 4.343 0 0 1-1.353 1.373c-.58.337-1.272.576-2.077.717-.805.141-1.685.212-2.64.212-.876 0-1.7-.08-2.472-.24a10.026 10.026 0 0 1-2.037-.674v-2.64c.732.435 1.5.766 2.304.993.805.227 1.62.34 2.447.34.54 0 .977-.087 1.312-.262.335-.175.503-.45.503-.825 0-.255-.062-.46-.188-.615a1.8 1.8 0 0 0-.495-.412c-.205-.105-.445-.195-.72-.27-.275-.075-.572-.152-.892-.232-.51-.128-.977-.282-1.402-.462a3.844 3.844 0 0 1-1.088-.705 2.87 2.87 0 0 1-.682-1.012c-.158-.415-.237-.91-.237-1.485 0-.743.167-1.373.502-1.89.335-.518.803-.934 1.403-1.248.6-.315 1.315-.536 2.145-.664.83-.128 1.738-.192 2.723-.192zm-8.895 2.37v11.755H6.555V12.12H2.25V9.875h12.72v2.245H9.593z" />
+                      </svg>
+                    )}
+                    {item.type === 'zod' && (
+                      <svg width="19" height="19" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M3.75 3h16.5A.75.75 0 0121 3.75v3a.75.75 0 01-.75.75H8.31l12.19 11.25a.75.75 0 01.25.55v4.2a.75.75 0 01-.75.75H3.75a.75.75 0 01-.75-.75v-3a.75.75 0 01.75-.75h11.94L3.5 8.55A.75.75 0 013.25 8V3.75A.75.75 0 013.75 3z" />
+                      </svg>
+                    )}
+                    {item.type === 'node' && (
+                      <svg width="19" height="19" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 1.5a1.5 1.5 0 0 0-.75.2l-8.25 4.76A1.5 1.5 0 0 0 2.25 7.76v9.48a1.5 1.5 0 0 0 .75 1.3l8.25 4.76a1.5 1.5 0 0 0 1.5 0l8.25-4.76a1.5 1.5 0 0 0 .75-1.3V7.76a1.5 1.5 0 0 0-.75-1.3L12.75 1.7A1.5 1.5 0 0 0 12 1.5zm-1.5 6.75h3a.75.75 0 0 1 .75.75v6a.75.75 0 0 1-.75.75h-3a.75.75 0 0 1-.75-.75v-6a.75.75 0 0 1 .75-.75z" />
+                      </svg>
+                    )}
+                    <span style={{ fontWeight: 650, fontSize: '14.5px', letterSpacing: '-0.3px', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
+                      {item.label}
+                    </span>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>
@@ -817,15 +775,15 @@ export function LandingPage({ onViewChange, theme }) {
       <section style={{
         borderTop: `1px solid ${s.border}`,
         background: isDark ? '#050505' : '#ffffff',
-        padding: '80px 40px',
+        padding: 'clamp(48px, 6vw, 80px) clamp(16px, 4vw, 40px)',
       }}>
         <div style={{ maxWidth: '1280px', margin: '0 auto' }}>
           {/* Header */}
-          <div style={{ marginBottom: '40px', textAlign: 'center' }}>
+          <div style={{ marginBottom: '36px', textAlign: 'center' }}>
             <div style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#0070f3', marginBottom: '10px' }}>
               Problem → Solution
             </div>
-            <h2 style={{ fontSize: 'clamp(26px, 3vw, 38px)', fontWeight: 700, letterSpacing: '-1px', color: s.textPrimary, margin: '0 0 12px' }}>
+            <h2 style={{ fontSize: 'clamp(24px, 3.5vw, 38px)', fontWeight: 700, letterSpacing: '-1px', color: s.textPrimary, margin: '0 0 12px' }}>
               Most frameworks are designed for demos.
             </h2>
             <p style={{ fontSize: '15px', color: s.textSecondary, maxWidth: '560px', margin: '0 auto', lineHeight: '1.65' }}>
@@ -833,10 +791,34 @@ export function LandingPage({ onViewChange, theme }) {
             </p>
           </div>
 
-          {/* Two-panel code comparison */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', borderRadius: '12px', overflow: 'hidden', border: `1px solid ${isDark ? '#1f1f1f' : '#e0e0e0'}` }}
-            className="compare-grid">
-            {/* Before */}
+          {/* Mobile Tab Controls (< md screens) */}
+          <div className="flex md:hidden items-center justify-center gap-2 mb-4">
+            <button
+              onClick={() => setMobileCompareTab('vulcan')}
+              className={`px-4 py-2 rounded-full text-xs font-semibold transition ${
+                mobileCompareTab === 'vulcan'
+                  ? 'bg-[#0070f3] text-white shadow-md'
+                  : 'bg-[#111111] text-[#888888] border border-[#222222]'
+              }`}
+            >
+              ⚡ WITH VULCAN (Clean)
+            </button>
+            <button
+              onClick={() => setMobileCompareTab('langchain')}
+              className={`px-4 py-2 rounded-full text-xs font-semibold transition ${
+                mobileCompareTab === 'langchain'
+                  ? 'bg-[#ef4444] text-white shadow-md'
+                  : 'bg-[#111111] text-[#888888] border border-[#222222]'
+              }`}
+            >
+              BEFORE — LangChain
+            </button>
+          </div>
+
+          {/* Desktop Two-panel Code Comparison (>= md screens) */}
+          <div style={{ borderRadius: '12px', overflow: 'hidden', border: `1px solid ${isDark ? '#1f1f1f' : '#e0e0e0'}` }}
+            className="hidden md:grid md:grid-cols-2 gap-[1px] bg-[#1a1a1a]">
+            {/* Before — LangChain */}
             <div style={{ background: '#0a0a0a' }}>
               <div style={{ padding: '10px 16px', borderBottom: '1px solid #1a1a1a', display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#ef4444', display: 'inline-block' }} />
@@ -874,8 +856,8 @@ workflow.addEdge("tools", "agent")
 const app = workflow.compile()
 const result = await app.invoke({ messages: [input] })`}</pre>
             </div>
-            {/* After */}
-            <div style={{ background: '#000' }}>
+            {/* After — Vulcan */}
+            <div style={{ background: '#000000' }}>
               <div style={{ padding: '10px 16px', borderBottom: '1px solid #1a1a1a', display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#4ade80', display: 'inline-block' }} />
                 <span style={{ fontSize: '11px', fontFamily: 'var(--font-mono)', color: '#4ade80', letterSpacing: '0.06em' }}>WITH Vulcan</span>
@@ -903,8 +885,67 @@ const { output } = await Vulcan.run(
             </div>
           </div>
 
+          {/* Mobile Single Panel Code View (< md screens) */}
+          <div className="block md:hidden border border-[#222] rounded-xl overflow-hidden">
+            {mobileCompareTab === 'vulcan' ? (
+              <div style={{ background: '#000000' }}>
+                <div style={{ padding: '10px 16px', borderBottom: '1px solid #1a1a1a', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#4ade80', display: 'inline-block' }} />
+                  <span style={{ fontSize: '11px', fontFamily: 'var(--font-mono)', color: '#4ade80', letterSpacing: '0.06em' }}>WITH Vulcan</span>
+                </div>
+                <pre style={{ padding: '16px', margin: 0, fontSize: '12px', lineHeight: '1.7', fontFamily: 'var(--font-mono)', color: '#d4d4d4', textAlign: 'left', overflowX: 'auto' }}>{`import { Vulcan } from 'vulcan-agentic-sdk'
+
+const agent = Vulcan.createAgent({
+  name: 'assistant',
+  instructions: 'Help the user.',
+  tools: [myTool],
+})
+
+const { output } = await Vulcan.run(
+  agent,
+  'User input here',
+  { session: 'user-123' }
+)
+
+// That's it. Vulcan handles:
+// ✓ Tool call / result loop
+// ✓ Zod argument validation
+// ✓ Session persistence
+// ✓ Structured tracing
+// ✓ Guardrail evaluation`}</pre>
+              </div>
+            ) : (
+              <div style={{ background: '#0a0a0a' }}>
+                <div style={{ padding: '10px 16px', borderBottom: '1px solid #1a1a1a', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#ef4444', display: 'inline-block' }} />
+                  <span style={{ fontSize: '11px', fontFamily: 'var(--font-mono)', color: '#ef4444', letterSpacing: '0.06em' }}>BEFORE — LangChain</span>
+                </div>
+                <pre style={{ padding: '16px', margin: 0, fontSize: '11.5px', lineHeight: '1.6', fontFamily: 'var(--font-mono)', color: '#666', textAlign: 'left', overflowX: 'auto' }}>{`// 80+ lines of graph boilerplate
+import { ChatOpenAI } from "@langchain/openai"
+import { ToolNode } from "@langchain/langgraph"
+import { StateGraph, MessagesAnnotation } from "@langchain/langgraph"
+
+const model = new ChatOpenAI({ model: "gpt-4o" }).bindTools(tools)
+
+function shouldContinue({ messages }) {
+  const lastMessage = messages[messages.length - 1]
+  return lastMessage.tool_calls?.length ? "tools" : "__end__"
+}
+
+const workflow = new StateGraph(MessagesAnnotation)
+workflow.addNode("agent", callModel)
+workflow.addNode("tools", new ToolNode(tools))
+workflow.addEdge("__start__", "agent")
+workflow.addConditionalEdges("agent", shouldContinue)
+
+const app = workflow.compile()
+const result = await app.invoke({ messages: [input] })`}</pre>
+              </div>
+            )}
+          </div>
+
           {/* 3 callout pills below */}
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', marginTop: '24px', justifyContent: 'center' }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', marginTop: '24px', justifyContent: 'center' }}>
             {[
               { bad: 'Graph wiring boilerplate', good: 'Declarative agent config' },
               { bad: 'Vendor lock-in', good: 'Swap models in one line' },
@@ -916,9 +957,9 @@ const { output } = await Vulcan.run(
                 border: `1px solid ${isDark ? '#1f1f1f' : '#e0e0e0'}`,
                 borderRadius: '999px', padding: '6px 14px',
               }}>
-                <span style={{ fontSize: '12px', color: '#666', textDecoration: 'line-through' }}>{item.bad}</span>
-                <span style={{ color: '#444', fontSize: '12px' }}>→</span>
-                <span style={{ fontSize: '12px', color: '#4ade80', fontWeight: 600 }}>✓ {item.good}</span>
+                <span style={{ fontSize: '11.5px', color: '#666', textDecoration: 'line-through' }}>{item.bad}</span>
+                <span style={{ color: '#444', fontSize: '11.5px' }}>→</span>
+                <span style={{ fontSize: '11.5px', color: '#4ade80', fontWeight: 600 }}>✓ {item.good}</span>
               </div>
             ))}
           </div>
@@ -942,11 +983,11 @@ const { output } = await Vulcan.run(
               Everything you need for production agents.
             </h2>
             <p style={{ fontSize: '15px', color: s.textSecondary, maxWidth: '540px', lineHeight: '1.65' }}>
-              Six core primitives. Cleanly decoupled. Composable in any combination.
+              Nine core primitives. Cleanly decoupled. Composable in any combination.
             </p>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '12px' }}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
             {FEATURES.map(f => <FeatureCard key={f.num} {...f} isDark={isDark} />)}
           </div>
         </div>
@@ -1408,12 +1449,11 @@ const { output } = await Vulcan.run(
       {/* Responsive styles */}
       <style>{`
         @media (max-width: 900px) {
-          .hero-grid { grid-template-columns: 1fr !important; }
-          .compare-grid { grid-template-columns: 1fr !important; }
+          .hero-grid { grid-template-columns: 1fr !important; gap: 32px !important; }
         }
-        @media (max-width: 600px) {
-          section { padding-left: 20px !important; padding-right: 20px !important; }
-          footer { padding-left: 20px !important; padding-right: 20px !important; }
+        @media (max-width: 640px) {
+          section { padding-left: 16px !important; padding-right: 16px !important; }
+          footer { padding-left: 16px !important; padding-right: 16px !important; }
         }
       `}</style>
     </main>

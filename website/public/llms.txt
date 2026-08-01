@@ -1,0 +1,44 @@
+# Vulcan SDK
+
+> Vulcan SDK is a zero-dependency, production-grade AI Agent framework for TypeScript.
+> Web: https://vulcan-sdk.itsrahulr15.online
+> npm: https://www.npmjs.com/package/vulcan-agentic-sdk
+> GitHub: https://github.com/its-rahul-r15/VULCAN-SDK
+
+## Overview
+
+Vulcan SDK provides type-safe tools with Zod validation, cycle-blocked multi-agent handoffs, human-in-the-loop (HITL) approval gates, per-run structured tracing, safety guardrails, and real-time SSE event streaming. It seamlessly supports Google Gemini, OpenAI GPT-4o, and Anthropic Claude.
+
+## Core Capabilities
+
+- **Type-safe Tool Calling**: Automatic Zod argument validation before execution handlers run.
+- **Built-in Production Tools**: Web Search (Tavily), Web Scraper, JS Code Sandbox, Read-only SQL, and Vector RAG retriever.
+- **Multi-Agent Handoffs**: Declarative delegation with built-in infinite cycle detection.
+- **Human-in-the-Loop (HITL)**: Operator authorization thresholds before critical execution.
+- **Safety Guardrails**: Input/output border checks, PII scrubber, keyword blocker, and async validators.
+- **Structured Tracing**: JSON and terminal pretty-printed execution traces per run.
+- **Session Memory**: Persistent conversation history backed by SQLite or custom storage adapters.
+- **Event Streaming**: Async iterable stream API for real-time UI updates.
+
+## Quick Example
+
+```typescript
+import { Vulcan, z } from 'vulcan-agentic-sdk'
+
+const searchTool = Vulcan.createTool({
+  name: 'search',
+  inputSchema: z.object({ query: z.string() }),
+  async execute({ query }) {
+    return { results: [`Result for ${query}`] }
+  }
+})
+
+const agent = Vulcan.createAgent({
+  name: 'assistant',
+  instructions: 'You are a helpful assistant.',
+  tools: [searchTool],
+})
+
+const { output } = await Vulcan.run(agent, 'Find latest AI news')
+console.log(output)
+```
