@@ -20,13 +20,13 @@ export function Header({ currentView, onViewChange, theme, onToggleTheme }) {
           position: 'relative',
         }}>
           <span style={{ color: '#0070f3', fontSize: '11px', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>
-            ⚡ NEW
+            ⚡ NEW v1.1.0
           </span>
           <span style={{ color: '#a1a1a1', fontSize: '12px', letterSpacing: '0.01em' }}>
-            Vulcan v1.0 is live — Zero-dependency, multi-provider AI agent SDK for TypeScript.
+            Vulcan v1.1.0 is live on npm — Built-in Tools (Web Search, Scraper, Sandbox, SQL, RAG) & HITL Approvals.
           </span>
           <a
-            href="https://github.com/its-rahul-r15/VULCAN-SDK"
+            href="https://www.npmjs.com/package/vulcan-agentic-sdk"
             target="_blank"
             rel="noopener noreferrer"
             style={{
@@ -39,7 +39,7 @@ export function Header({ currentView, onViewChange, theme, onToggleTheme }) {
               transition: 'border-color 0.15s',
             }}
           >
-            View on GitHub →
+            View on npm →
           </a>
           <button
             onClick={() => setBannerVisible(false)}
@@ -101,16 +101,21 @@ export function Header({ currentView, onViewChange, theme, onToggleTheme }) {
                 Docs
               </button>
               <span className={isDark ? 'text-[#333333] px-1' : 'text-[#ebebeb] px-1'}>|</span>
-              <span className={`caption-mono text-[11px] px-2 py-0.5 rounded border ${isDark
-                  ? 'text-[#a1a1a1] bg-[#111111] border-[#262626]'
-                  : 'text-[#888888] bg-[#f5f5f5] border-[#ebebeb]'
-                }`}>
-                v1.0.0
-              </span>
+              <a
+                href="https://www.npmjs.com/package/vulcan-agentic-sdk"
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`caption-mono text-[11px] px-2 py-0.5 rounded border transition hover:opacity-80 ${isDark
+                    ? 'text-[#a1a1a1] bg-[#111111] border-[#262626]'
+                    : 'text-[#888888] bg-[#f5f5f5] border-[#ebebeb]'
+                  }`}
+              >
+                v1.1.0 on npm ↗
+              </a>
             </nav>
           </div>
 
-          {/* Right CTA / GitHub / Theme Toggle */}
+          {/* Right CTA / npm / GitHub / Theme Toggle */}
           <div className="flex items-center gap-3">
 
             {/* Theme Toggle */}
@@ -133,6 +138,20 @@ export function Header({ currentView, onViewChange, theme, onToggleTheme }) {
                 </svg>
               )}
             </button>
+
+            {/* npm Link */}
+            <a
+              href="https://www.npmjs.com/package/vulcan-agentic-sdk"
+              target="_blank"
+              rel="noopener noreferrer"
+              className={`p-1.5 transition flex items-center gap-1 ${isDark ? 'text-[#a1a1a1] hover:text-white' : 'text-[#4d4d4d] hover:text-[#171717]'}`}
+              title="npm package"
+              aria-label="npm package"
+            >
+              <svg className="h-5 w-5 fill-current" viewBox="0 0 24 24">
+                <path d="M0 7.334v8h6.666v-1.334H4V10h2.666V8.666H1.334v6.668H0V7.334zm8 0h6.666v8h-4v-1.334h2.667V10H10.666v4.668H9.334V8.666H8V7.334zm9.334 0H24v8h-6.666V7.334zm5.333 1.333h-4v5.334h4V8.667zM1.334 8.667h2.666v1.333H1.334V8.667zm8 0h2.666v1.333H9.334V8.667z"/>
+              </svg>
+            </a>
 
             {/* GitHub */}
             <a

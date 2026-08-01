@@ -395,7 +395,7 @@ export function LandingPage({ onViewChange, theme }) {
               {[
                 { value: '< 50kb', label: 'gzipped' },
                 { value: 'MIT', label: 'License' },
-                { value: 'v1.0', label: 'Stable' },
+                { value: 'v1.1', label: 'Stable' },
                 { value: '3', label: 'LLM Providers' },
               ].map(m => (
                 <div key={m.label} style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
@@ -1307,14 +1307,14 @@ const { output } = await Vulcan.run(
                 style={{ fontSize: '12px', color: 'inherit', background: 'none', border: 'none', cursor: 'pointer', transition: 'color 0.15s' }}
                 onMouseEnter={e => e.currentTarget.style.color = isDark ? '#fff' : '#111'}
                 onMouseLeave={e => e.currentTarget.style.color = ''}>Documentation</button>
+              <a href="https://www.npmjs.com/package/vulcan-agentic-sdk" target="_blank" rel="noopener noreferrer"
+                style={{ fontSize: '12px', color: 'inherit', textDecoration: 'none', transition: 'color 0.15s' }}
+                onMouseEnter={e => e.currentTarget.style.color = isDark ? '#fff' : '#111'}
+                onMouseLeave={e => e.currentTarget.style.color = ''}>npm Package</a>
               <a href="https://github.com/its-rahul-r15/VULCAN-SDK" target="_blank" rel="noopener noreferrer"
                 style={{ fontSize: '12px', color: 'inherit', textDecoration: 'none', transition: 'color 0.15s' }}
                 onMouseEnter={e => e.currentTarget.style.color = isDark ? '#fff' : '#111'}
                 onMouseLeave={e => e.currentTarget.style.color = ''}>GitHub</a>
-              <a href="https://github.com/its-rahul-r15/VULCAN-SDK/releases" target="_blank" rel="noopener noreferrer"
-                style={{ fontSize: '12px', color: 'inherit', textDecoration: 'none', transition: 'color 0.15s' }}
-                onMouseEnter={e => e.currentTarget.style.color = isDark ? '#fff' : '#111'}
-                onMouseLeave={e => e.currentTarget.style.color = ''}>Changelog</a>
             </div>
           </div>
         </div>
