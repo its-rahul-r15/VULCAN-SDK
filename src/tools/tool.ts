@@ -13,6 +13,7 @@ export class Tool<TInput = unknown, TOutput = unknown>
   readonly inputSchema: ZodSchema<TInput>
   readonly timeoutMs: number
   readonly errorHandler?: (error: Error, input: TInput) => TOutput | string
+  readonly requiresApproval?: boolean | ((input: TInput) => boolean)
   private readonly _execute: (input: TInput, context: RunContextLite) => Promise<TOutput>
 
   constructor(config: ToolConfig<TInput, TOutput>) {
@@ -22,6 +23,7 @@ export class Tool<TInput = unknown, TOutput = unknown>
     this.timeoutMs = config.timeoutMs ?? 30_000
     this._execute = config.execute
     this.errorHandler = config.errorHandler
+    this.requiresApproval = config.requiresApproval
   }
 
   /**
@@ -124,6 +126,8 @@ export interface ToolConfig<TInput, TOutput> {
   errorHandler?: (error: Error, input: TInput) => TOutput | string
   /** Execution timeout in milliseconds (default: 30000) */
   timeoutMs?: number
+  /** Require Human-in-the-Loop approval before executing this tool */
+  requiresApproval?: boolean | ((input: any) => boolean)
 }
 
 // ─────────────────────────────────────────────

@@ -15,9 +15,10 @@ export { Agent, AgentConfigError } from './core/agent.js'
 export { AgentRunner, HandoffLoopError, StructuredOutputValidationError } from './core/runner.js'
 export { RunContext } from './core/context.js'
 export { VulcanHarness, vulcanHarness, VULCAN_HARNESS_PROMPT, HarnessParseError } from './core/harness.js'
+export { ApprovalRequiredSignal, createApprovalRequest, parseApprovalResult } from './core/hitl.js'
 
 // ─────────────────────────────────────────────
-// Tools
+// Tools & Built-in Tools
 // ─────────────────────────────────────────────
 export {
   Tool,
@@ -27,6 +28,22 @@ export {
   zodToJsonSchema,
 } from './tools/tool.js'
 export type { OpenAIFunctionSchema, AnthropicToolSchema, GeminiFunctionSchema } from './tools/tool.js'
+export {
+  createWebSearchTool,
+  createWebScraperTool,
+  createCodeSandboxTool,
+  createSQLQueryTool,
+  createVectorStoreTool,
+} from './tools/builtin/index.js'
+export type {
+  WebSearchOptions,
+  WebSearchResult,
+  WebScraperOptions,
+  CodeSandboxOptions,
+  SQLQueryOptions,
+  VectorStoreOptions,
+  VectorSearchResult,
+} from './tools/builtin/index.js'
 
 // ─────────────────────────────────────────────
 // Providers
@@ -92,6 +109,10 @@ export type {
   HarnessMessage,
   HarnessStep,
   ReasoningMode,
+  // HITL Approval
+  ApprovalRequest,
+  ApprovalResult,
+  ApprovalHandler,
   // Run
   RunOptions,
   RunResult,

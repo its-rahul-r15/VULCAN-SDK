@@ -59,7 +59,23 @@ interface HarnessMessage {
     input?: unknown;
 }
 type ReasoningMode = 'standard' | 'harness';
-type RunStatus = 'running' | 'completed' | 'failed' | 'max_turns_reached' | 'handoff' | 'guardrail_blocked';
+interface ApprovalRequest {
+    id: string;
+    toolName: string;
+    input: unknown;
+    toolCallId: string;
+    runId: string;
+    sessionId: string;
+    agentName: string;
+    timestamp: number;
+}
+interface ApprovalResult {
+    approved: boolean;
+    reason?: string;
+    modifiedInput?: unknown;
+}
+type ApprovalHandler = (request: ApprovalRequest) => Promise<ApprovalResult | boolean> | ApprovalResult | boolean;
+type RunStatus = 'running' | 'completed' | 'failed' | 'max_turns_reached' | 'handoff' | 'guardrail_blocked' | 'requires_approval';
 interface RunResult<T = string> {
     output: T;
     rawOutput: string;
@@ -70,6 +86,7 @@ interface RunResult<T = string> {
     usage: TokenUsage;
     agentName: string;
     error?: string;
+    pendingApproval?: ApprovalRequest;
 }
 interface RunOptions {
     sessionId?: string;
@@ -79,8 +96,10 @@ interface RunOptions {
     metadata?: Record<string, unknown>;
     /** Override the agent's provider for this run */
     provider?: string;
+    /** Human-in-the-Loop approval callback for sensitive tool calls */
+    onApproval?: ApprovalHandler;
 }
-type VulcanEventType = 'text_streamed' | 'tool_started' | 'tool_completed' | 'tool_error' | 'handoff_started' | 'handoff_completed' | 'guardrail_triggered' | 'guardrail_passed' | 'harness_step' | 'model_called' | 'retry' | 'run_started' | 'run_completed' | 'run_failed';
+type VulcanEventType = 'text_streamed' | 'tool_started' | 'tool_completed' | 'tool_error' | 'approval_requested' | 'approval_granted' | 'approval_rejected' | 'handoff_started' | 'handoff_completed' | 'guardrail_triggered' | 'guardrail_passed' | 'harness_step' | 'model_called' | 'retry' | 'run_started' | 'run_completed' | 'run_failed';
 interface VulcanEvent {
     type: VulcanEventType;
     timestamp: number;
@@ -181,6 +200,8 @@ interface ToolDefinition<TInput = unknown, TOutput = unknown> {
     execute(input: TInput, context: RunContextLite): Promise<TOutput>;
     errorHandler?(error: Error, input: TInput): TOutput | string;
     timeoutMs?: number;
+    /** Require Human-in-the-Loop approval before executing this tool */
+    requiresApproval?: boolean | ((input: any) => boolean);
 }
 /**
  * ToolConfig — the configuration object passed to Tool.create().
@@ -193,6 +214,8 @@ interface ToolConfig$1<TInput = unknown, TOutput = unknown> {
     execute: (input: TInput, context: RunContextLite) => Promise<TOutput>;
     errorHandler?: (error: Error, input: TInput) => TOutput | string;
     timeoutMs?: number;
+    /** Require Human-in-the-Loop approval before executing this tool */
+    requiresApproval?: boolean | ((input: any) => boolean);
 }
 interface AgentConfig {
     /** Unique agent name — used for handoffs and tracing */
@@ -225,6 +248,8 @@ interface AgentConfig {
     temperature?: number;
     /** Max tokens per response */
     maxTokens?: number;
+    /** Default Human-in-the-Loop approval handler for this agent */
+    onApproval?: ApprovalHandler;
 }
 
 declare class Agent {
@@ -471,12 +496,27 @@ declare class HarnessParseError extends Error {
 }
 declare const vulcanHarness: VulcanHarness;
 
+declare class ApprovalRequiredSignal extends Error {
+    readonly request: ApprovalRequest;
+    constructor(request: ApprovalRequest);
+}
+declare function createApprovalRequest(params: {
+    toolName: string;
+    input: unknown;
+    toolCallId: string;
+    runId: string;
+    sessionId: string;
+    agentName: string;
+}): ApprovalRequest;
+declare function parseApprovalResult(result: ApprovalResult | boolean): ApprovalResult;
+
 declare class Tool<TInput = unknown, TOutput = unknown> implements ToolDefinition<TInput, TOutput> {
     readonly name: string;
     readonly description: string;
     readonly inputSchema: ZodSchema<TInput>;
     readonly timeoutMs: number;
     readonly errorHandler?: (error: Error, input: TInput) => TOutput | string;
+    readonly requiresApproval?: boolean | ((input: TInput) => boolean);
     private readonly _execute;
     constructor(config: ToolConfig<TInput, TOutput>);
     /**
@@ -513,6 +553,8 @@ interface ToolConfig<TInput, TOutput> {
     errorHandler?: (error: Error, input: TInput) => TOutput | string;
     /** Execution timeout in milliseconds (default: 30000) */
     timeoutMs?: number;
+    /** Require Human-in-the-Loop approval before executing this tool */
+    requiresApproval?: boolean | ((input: any) => boolean);
 }
 declare class ToolValidationError extends Error {
     readonly toolName: string;
@@ -553,6 +595,113 @@ interface GeminiFunctionSchema {
  * This is a lightweight converter covering the most common Zod types.
  */
 declare function zodToJsonSchema(schema: ZodSchema): Record<string, unknown>;
+
+interface WebSearchResult {
+    title: string;
+    url: string;
+    snippet: string;
+}
+interface WebSearchOptions {
+    /** Search API key (Tavily, Brave, etc.) if applicable */
+    apiKey?: string;
+    /** Provider: 'tavily' | 'brave' | 'mock' (default: 'mock') */
+    provider?: 'tavily' | 'brave' | 'mock';
+    /** Default max results (default: 5) */
+    maxResults?: number;
+}
+declare function createWebSearchTool(options?: WebSearchOptions): Tool<{
+    query: string;
+    maxResults?: number | undefined;
+}, {
+    title: string;
+    url: string;
+    snippet: string;
+}[]>;
+
+interface WebScraperOptions {
+    /** Maximum response character length (default: 8000) */
+    maxLength?: number;
+    /** Request timeout in ms (default: 10000) */
+    timeoutMs?: number;
+}
+declare function createWebScraperTool(options?: WebScraperOptions): Tool<{
+    url: string;
+    maxLength?: number | undefined;
+}, {
+    url: string;
+    status: number;
+    content: string;
+    contentLength?: undefined;
+} | {
+    url: string;
+    status: number;
+    contentLength: number;
+    content: string;
+}>;
+
+interface CodeSandboxOptions {
+    /** Allowed global variable keys */
+    allowedGlobals?: Record<string, unknown>;
+    /** Timeout in ms (default: 5000) */
+    timeoutMs?: number;
+}
+declare function createCodeSandboxTool(options?: CodeSandboxOptions): Tool<{
+    code: string;
+    language?: "javascript" | "typescript" | undefined;
+}, {
+    success: boolean;
+    result: string | null;
+    logs: string[];
+    error?: undefined;
+} | {
+    success: boolean;
+    error: string;
+    logs: string[];
+    result?: undefined;
+}>;
+
+interface SQLQueryOptions {
+    /** Database query executor callback */
+    executeQuery: (sql: string) => Promise<unknown[]> | unknown[];
+    /** Enforce strict read-only queries (SELECT only). Default: true */
+    readOnly?: boolean;
+    /** Human-readable database schema description for the model */
+    schemaDescription?: string;
+}
+declare function createSQLQueryTool(options: SQLQueryOptions): Tool<{
+    query: string;
+}, {
+    query: string;
+    rowCount: number;
+    rows: unknown[];
+    error?: undefined;
+} | {
+    query: string;
+    error: string;
+    rowCount?: undefined;
+    rows?: undefined;
+}>;
+
+interface VectorSearchResult {
+    id: string;
+    score: number;
+    content: string;
+    metadata?: Record<string, unknown>;
+}
+interface VectorStoreOptions {
+    /** Custom vector search implementation */
+    searchFn: (query: string, topK: number) => Promise<VectorSearchResult[]> | VectorSearchResult[];
+    /** Default topK matches to retrieve (default: 3) */
+    defaultTopK?: number;
+}
+declare function createVectorStoreTool(options: VectorStoreOptions): Tool<{
+    query: string;
+    topK?: number | undefined;
+}, {
+    query: string;
+    count: number;
+    results: VectorSearchResult[];
+}>;
 
 /**
  * Every model provider must implement this interface.
@@ -857,4 +1006,4 @@ declare const Vulcan: {
     stream(agent: Agent, input: string, options?: RunOptions): AsyncGenerator<VulcanEvent, void, any>;
 };
 
-export { Agent, type AgentConfig, AgentConfigError, AgentRunner, AnthropicProvider, type AnthropicToolSchema, BaseProvider, BlockedToolsGuardrail, type FinishReason, FunctionGuardrail, type GeminiFunctionSchema, GeminiProvider, type Guardrail, GuardrailBlockedError, type GuardrailPayload, type GuardrailResult, type GuardrailType, HandoffLoopError, type HandoffRecord, type HarnessMessage, HarnessParseError, type HarnessStep, InMemoryStorage, KeywordBlockGuardrail, MaxLengthGuardrail, type Message, type MessageRole, type ModelCallRecord, type ModelProvider, type ModelResponse, type OpenAIFunctionSchema, OpenAIProvider, PIIScrubberGuardrail, type ProviderCallConfig, ProviderError, ProviderNotFoundError, type ReasoningMode, RunContext, type RunContextLite, type RunOptions, type RunResult, type RunStatus, SQLiteStorage, SQLiteStorageError, type Session, SessionManager, type StorageAdapter, type StreamChunk, StructuredOutputGuardrail, StructuredOutputValidationError, type TokenUsage, Tool, type ToolCall, type ToolCallRecord, type ToolDefinition, ToolExecutionError, type ToolResult, ToolTimeoutError, ToolValidationError, type Trace, VULCAN_HARNESS_PROMPT, Vulcan, type VulcanEvent, type VulcanEventType, VulcanHarness, VulcanTracer, createSession, globalTracer, providerRegistry, runGuardrails, updateSession, vulcanHarness, zodToJsonSchema };
+export { Agent, type AgentConfig, AgentConfigError, AgentRunner, AnthropicProvider, type AnthropicToolSchema, type ApprovalHandler, type ApprovalRequest, ApprovalRequiredSignal, type ApprovalResult, BaseProvider, BlockedToolsGuardrail, type CodeSandboxOptions, type FinishReason, FunctionGuardrail, type GeminiFunctionSchema, GeminiProvider, type Guardrail, GuardrailBlockedError, type GuardrailPayload, type GuardrailResult, type GuardrailType, HandoffLoopError, type HandoffRecord, type HarnessMessage, HarnessParseError, type HarnessStep, InMemoryStorage, KeywordBlockGuardrail, MaxLengthGuardrail, type Message, type MessageRole, type ModelCallRecord, type ModelProvider, type ModelResponse, type OpenAIFunctionSchema, OpenAIProvider, PIIScrubberGuardrail, type ProviderCallConfig, ProviderError, ProviderNotFoundError, type ReasoningMode, RunContext, type RunContextLite, type RunOptions, type RunResult, type RunStatus, type SQLQueryOptions, SQLiteStorage, SQLiteStorageError, type Session, SessionManager, type StorageAdapter, type StreamChunk, StructuredOutputGuardrail, StructuredOutputValidationError, type TokenUsage, Tool, type ToolCall, type ToolCallRecord, type ToolDefinition, ToolExecutionError, type ToolResult, ToolTimeoutError, ToolValidationError, type Trace, VULCAN_HARNESS_PROMPT, type VectorSearchResult, type VectorStoreOptions, Vulcan, type VulcanEvent, type VulcanEventType, VulcanHarness, VulcanTracer, type WebScraperOptions, type WebSearchOptions, type WebSearchResult, createApprovalRequest, createCodeSandboxTool, createSQLQueryTool, createSession, createVectorStoreTool, createWebScraperTool, createWebSearchTool, globalTracer, parseApprovalResult, providerRegistry, runGuardrails, updateSession, vulcanHarness, zodToJsonSchema };

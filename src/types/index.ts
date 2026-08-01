@@ -102,6 +102,31 @@ export interface HarnessMessage {
 export type ReasoningMode = 'standard' | 'harness'
 
 // ─────────────────────────────────────────────
+// Human-in-the-Loop (HITL) Approval Types
+// ─────────────────────────────────────────────
+
+export interface ApprovalRequest {
+  id: string
+  toolName: string
+  input: unknown
+  toolCallId: string
+  runId: string
+  sessionId: string
+  agentName: string
+  timestamp: number
+}
+
+export interface ApprovalResult {
+  approved: boolean
+  reason?: string
+  modifiedInput?: unknown
+}
+
+export type ApprovalHandler = (
+  request: ApprovalRequest,
+) => Promise<ApprovalResult | boolean> | ApprovalResult | boolean
+
+// ─────────────────────────────────────────────
 // Run Status & Result
 // ─────────────────────────────────────────────
 
@@ -112,6 +137,7 @@ export type RunStatus =
   | 'max_turns_reached'
   | 'handoff'
   | 'guardrail_blocked'
+  | 'requires_approval'
 
 export interface RunResult<T = string> {
   output: T
@@ -123,6 +149,7 @@ export interface RunResult<T = string> {
   usage: TokenUsage
   agentName: string
   error?: string
+  pendingApproval?: ApprovalRequest
 }
 
 export interface RunOptions {
@@ -133,6 +160,8 @@ export interface RunOptions {
   metadata?: Record<string, unknown>
   /** Override the agent's provider for this run */
   provider?: string
+  /** Human-in-the-Loop approval callback for sensitive tool calls */
+  onApproval?: ApprovalHandler
 }
 
 // ─────────────────────────────────────────────
@@ -144,6 +173,9 @@ export type VulcanEventType =
   | 'tool_started'
   | 'tool_completed'
   | 'tool_error'
+  | 'approval_requested'
+  | 'approval_granted'
+  | 'approval_rejected'
   | 'handoff_started'
   | 'handoff_completed'
   | 'guardrail_triggered'
@@ -288,6 +320,8 @@ export interface ToolDefinition<TInput = unknown, TOutput = unknown> {
   execute(input: TInput, context: RunContextLite): Promise<TOutput>
   errorHandler?(error: Error, input: TInput): TOutput | string
   timeoutMs?: number
+  /** Require Human-in-the-Loop approval before executing this tool */
+  requiresApproval?: boolean | ((input: any) => boolean)
 }
 
 /**
@@ -301,6 +335,8 @@ export interface ToolConfig<TInput = unknown, TOutput = unknown> {
   execute: (input: TInput, context: RunContextLite) => Promise<TOutput>
   errorHandler?: (error: Error, input: TInput) => TOutput | string
   timeoutMs?: number
+  /** Require Human-in-the-Loop approval before executing this tool */
+  requiresApproval?: boolean | ((input: any) => boolean)
 }
 
 // ─────────────────────────────────────────────
@@ -338,6 +374,8 @@ export interface AgentConfig {
   temperature?: number
   /** Max tokens per response */
   maxTokens?: number
+  /** Default Human-in-the-Loop approval handler for this agent */
+  onApproval?: ApprovalHandler
 }
 
 // Re-export zod for convenience

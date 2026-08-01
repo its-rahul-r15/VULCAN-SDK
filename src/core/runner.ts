@@ -22,6 +22,7 @@ import { providerRegistry, ProviderError } from '../providers/provider.js'
 import { Tool } from '../tools/tool.js'
 import { runGuardrails, GuardrailBlockedError } from '../guardrails/guardrails.js'
 import { vulcanHarness, HarnessParseError } from './harness.js'
+import { ApprovalRequiredSignal, createApprovalRequest, parseApprovalResult } from './hitl.js'
 
 // ─────────────────────────────────────────────
 // Handoff Signal (special error for control flow)
@@ -319,7 +320,25 @@ export class AgentRunner {
           }
 
           // Regular tool call
-          await this._executeToolCall(ctx, toolCall, toolList)
+          try {
+            await this._executeToolCall(ctx, toolCall, toolList, options)
+          } catch (err) {
+            if (err instanceof ApprovalRequiredSignal) {
+              await this._persistSession(ctx, sessionManager, '')
+              return {
+                output: '' as unknown as T,
+                rawOutput: '',
+                status: 'requires_approval',
+                sessionId: ctx.sessionId,
+                traceId: ctx.trace.runId,
+                turns: ctx.turn,
+                usage: ctx.trace.totalUsage,
+                agentName: ctx.agentName,
+                pendingApproval: err.request,
+              }
+            }
+            throw err
+          }
         }
         continue
       }
@@ -610,6 +629,7 @@ export class AgentRunner {
     ctx: RunContext,
     toolCall: ToolCall,
     tools: Tool[],
+    options?: RunOptions,
   ): Promise<void> {
     const tool = tools.find((t) => t.name === toolCall.name)
 
@@ -648,11 +668,54 @@ export class AgentRunner {
       return
     }
 
-    ctx.emit('tool_started', { name: toolCall.name, input: toolCall.arguments, id: toolCall.id })
+    // ── Human-in-the-Loop (HITL) Approval Check ──
+    const requiresApproval = tool.requiresApproval
+    const needsApproval = typeof requiresApproval === 'function'
+      ? requiresApproval(toolCall.arguments)
+      : Boolean(requiresApproval)
+
+    let finalInput = toolCall.arguments
+
+    if (needsApproval) {
+      const approvalReq = createApprovalRequest({
+        toolName: toolCall.name,
+        input: toolCall.arguments,
+        toolCallId: toolCall.id,
+        runId: ctx.trace.runId,
+        sessionId: ctx.sessionId,
+        agentName: ctx.agentName,
+      })
+
+      ctx.emit('approval_requested', approvalReq)
+
+      const handler = options?.onApproval ?? ctx.agentConfig.onApproval
+
+      if (handler) {
+        const rawRes = await handler(approvalReq)
+        const parsedRes = parseApprovalResult(rawRes)
+
+        if (parsedRes.approved) {
+          ctx.emit('approval_granted', { request: approvalReq, result: parsedRes })
+          if (parsedRes.modifiedInput) {
+            finalInput = parsedRes.modifiedInput as Record<string, unknown>
+          }
+        } else {
+          ctx.emit('approval_rejected', { request: approvalReq, result: parsedRes })
+          const rejectMsg = JSON.stringify({ error: `Tool execution rejected: ${parsedRes.reason ?? 'Approval denied by operator'}` })
+          ctx.addMessage({ role: 'tool', content: rejectMsg, toolCallId: toolCall.id, name: toolCall.name })
+          return
+        }
+      } else {
+        // Pause execution and throw signal
+        throw new ApprovalRequiredSignal(approvalReq)
+      }
+    }
+
+    ctx.emit('tool_started', { name: toolCall.name, input: finalInput, id: toolCall.id })
     const toolStart = Date.now()
 
     try {
-      const result = await (tool as Tool).execute(toolCall.arguments, {
+      const result = await (tool as Tool).execute(finalInput, {
         runId: ctx.trace.runId,
         sessionId: ctx.sessionId,
         agentName: ctx.agentName,
@@ -661,12 +724,12 @@ export class AgentRunner {
       })
 
       const outputStr = typeof result === 'string' ? result : JSON.stringify(result)
-      this.tracer.addToolCall(ctx.trace, toolCall.name, toolCall.arguments, result, Date.now() - toolStart)
+      this.tracer.addToolCall(ctx.trace, toolCall.name, finalInput, result, Date.now() - toolStart)
       ctx.emit('tool_completed', { name: toolCall.name, output: result, id: toolCall.id })
       ctx.addMessage({ role: 'tool', content: outputStr, toolCallId: toolCall.id, name: toolCall.name })
     } catch (error) {
       const err = error instanceof Error ? error : new Error(String(error))
-      this.tracer.addToolCall(ctx.trace, toolCall.name, toolCall.arguments, err.message, Date.now() - toolStart, true)
+      this.tracer.addToolCall(ctx.trace, toolCall.name, finalInput, err.message, Date.now() - toolStart, true)
       ctx.emit('tool_error', { name: toolCall.name, error: err.message, id: toolCall.id })
       const errorMsg = JSON.stringify({ error: err.message })
       ctx.addMessage({ role: 'tool', content: errorMsg, toolCallId: toolCall.id, name: toolCall.name })

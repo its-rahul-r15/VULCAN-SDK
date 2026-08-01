@@ -1,20 +1,151 @@
 @import "tailwindcss";
 
 @theme {
-  --color-background: #000000;
-  --color-foreground: #ffffff;
-  --color-accent-orange: #ff5500;
-  --color-accent-amber: #ffaa00;
-  --color-border-muted: #1f1f1f;
-  --color-bg-card: #0a0a0a;
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'Fira Code', 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, monospace;
+}
+
+:root, .dark {
+  --color-canvas-soft: #000000;
+  --color-canvas: #0a0a0a;
+  --color-canvas-card: #0a0a0a;
+  --color-ink: #ffffff;
+  --color-body-text: #a1a1a1;
+  --color-mute-text: #666666;
+  --color-hairline: #262626;
+  --color-hairline-strong: #404040;
+  --color-primary-cta: #ffffff;
+  --color-on-primary-cta: #000000;
+}
+
+.light {
+  --color-canvas-soft: #fafafa;
+  --color-canvas: #ffffff;
+  --color-canvas-card: #ffffff;
+  --color-ink: #171717;
+  --color-body-text: #4d4d4d;
+  --color-mute-text: #888888;
+  --color-hairline: #ebebeb;
+  --color-hairline-strong: #a1a1a1;
+  --color-primary-cta: #171717;
+  --color-on-primary-cta: #ffffff;
 }
 
 @layer base {
-  body {
-    background-color: #000000;
-    color: #ffffff;
-    font-family: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  html, body {
+    background-color: var(--color-canvas-soft);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    transition: background-color 0.2s ease, color 0.2s ease;
   }
+}
+
+/* Vercel Design System Typography Helpers */
+.display-xl {
+  font-family: var(--font-sans);
+  font-size: 48px;
+  font-weight: 600;
+  line-height: 48px;
+  letter-spacing: -2.4px;
+}
+
+.display-lg {
+  font-family: var(--font-sans);
+  font-size: 32px;
+  font-weight: 600;
+  line-height: 40px;
+  letter-spacing: -1.28px;
+}
+
+.display-md {
+  font-family: var(--font-sans);
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 32px;
+  letter-spacing: -0.96px;
+}
+
+.display-sm {
+  font-family: var(--font-sans);
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 28px;
+  letter-spacing: -0.6px;
+}
+
+.body-lg {
+  font-family: var(--font-sans);
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 28px;
+  letter-spacing: 0px;
+}
+
+.body-md {
+  font-family: var(--font-sans);
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 24px;
+  letter-spacing: 0px;
+}
+
+.body-sm {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 20px;
+  letter-spacing: -0.28px;
+}
+
+.caption-mono {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 16px;
+  letter-spacing: 0px;
+}
+
+/* Vercel Stacked Shadow System */
+.dark .shadow-stacked-sm, .shadow-stacked-sm {
+  box-shadow: 0 0 0 1px #262626, 0px 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+.dark .shadow-stacked-md, .shadow-stacked-md {
+  box-shadow: 0 0 0 1px #262626, 0px 4px 12px rgba(0, 0, 0, 0.5);
+}
+
+.dark .shadow-stacked-lg, .shadow-stacked-lg {
+  box-shadow: 0 0 0 1px #262626, 0px 8px 24px rgba(0, 0, 0, 0.6);
+}
+
+.light .shadow-stacked-sm {
+  box-shadow: 0 0 0 1px #ebebeb, 0px 1px 1px rgba(0, 0, 0, 0.04), 0px 2px 2px rgba(0, 0, 0, 0.04);
+}
+
+.light .shadow-stacked-md {
+  box-shadow: 0 0 0 1px #ebebeb, 0px 2px 2px rgba(0, 0, 0, 0.04), 0px 8px 8px -8px rgba(0, 0, 0, 0.06);
+}
+
+.light .shadow-stacked-lg {
+  box-shadow: 0 0 0 1px #ebebeb, 0px 2px 2px rgba(0, 0, 0, 0.04), 0px 8px 16px -4px rgba(0, 0, 0, 0.08);
+}
+
+/* Hero Mesh Gradient Backdrop */
+.hero-mesh-gradient {
+  background: radial-gradient(at 15% 15%, rgba(0, 124, 240, 0.25) 0px, transparent 50%),
+              radial-gradient(at 85% 10%, rgba(0, 223, 216, 0.22) 0px, transparent 50%),
+              radial-gradient(at 50% 45%, rgba(80, 227, 194, 0.18) 0px, transparent 50%),
+              radial-gradient(at 75% 60%, rgba(121, 40, 202, 0.22) 0px, transparent 50%),
+              radial-gradient(at 10% 85%, rgba(255, 0, 128, 0.18) 0px, transparent 50%),
+              radial-gradient(at 90% 85%, rgba(249, 203, 40, 0.20) 0px, transparent 50%);
+  filter: blur(55px);
+  animation: meshFloat 14s ease-in-out infinite alternate;
+}
+
+@keyframes meshFloat {
+  0% { transform: scale(1) translateY(0); }
+  100% { transform: scale(1.06) translateY(-12px); }
 }
 
 /* Custom Scrollbars */
@@ -23,42 +154,16 @@
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #000000;
+  background: var(--color-canvas-soft);
 }
 ::-webkit-scrollbar-thumb {
-  background: #1f1f1f;
+  background: var(--color-hairline);
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #2f2f2f;
+  background: var(--color-hairline-strong);
 }
 
-/* Ambient glow animations */
-@keyframes float {
-  0%, 100% {
-    transform: translateY(0px) scale(1);
-    opacity: 0.5;
-  }
-  50% {
-    transform: translateY(-15px) scale(1.05);
-    opacity: 0.75;
-  }
-}
-
-.ambient-glow {
-  filter: blur(100px);
-  animation: float 10s ease-in-out infinite;
-}
-
-.ambient-glow-2 {
-  filter: blur(120px);
-  animation: float 14s ease-in-out infinite reverse;
-}
-
-/* Code styling overrides */
-pre {
-  font-family: 'Fira Code', 'JetBrains Mono', ui-monospace, monospace;
-}
-code {
-  font-family: 'Fira Code', 'JetBrains Mono', ui-monospace, monospace;
+pre, code {
+  font-family: var(--font-mono);
 }

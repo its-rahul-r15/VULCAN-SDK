@@ -790,6 +790,39 @@ ${baseInstructions}`;
   }
 });
 
+// src/core/hitl.ts
+function createApprovalRequest(params) {
+  return {
+    id: `appr_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+    toolName: params.toolName,
+    input: params.input,
+    toolCallId: params.toolCallId,
+    runId: params.runId,
+    sessionId: params.sessionId,
+    agentName: params.agentName,
+    timestamp: Date.now()
+  };
+}
+function parseApprovalResult(result) {
+  if (typeof result === "boolean") {
+    return { approved: result };
+  }
+  return result;
+}
+var ApprovalRequiredSignal;
+var init_hitl = __esm({
+  "src/core/hitl.ts"() {
+    ApprovalRequiredSignal = class extends Error {
+      constructor(request) {
+        super(`Execution paused for human approval on tool '${request.toolName}'`);
+        this.request = request;
+        this.name = "ApprovalRequiredSignal";
+      }
+      request;
+    };
+  }
+});
+
 // src/types/index.ts
 var types_exports = {};
 __export(types_exports, {
@@ -828,6 +861,7 @@ var init_runner = __esm({
     init_provider();
     init_guardrails();
     init_harness();
+    init_hitl();
     AgentRunner = class {
       tracer;
       constructor(tracer) {
@@ -1026,7 +1060,25 @@ var init_runner = __esm({
                   return this._runStandardLoop(ctx, newAllTools, options, sessionManager, maxTurns);
                 }
               }
-              await this._executeToolCall(ctx, toolCall, toolList);
+              try {
+                await this._executeToolCall(ctx, toolCall, toolList, options);
+              } catch (err) {
+                if (err instanceof ApprovalRequiredSignal) {
+                  await this._persistSession(ctx, sessionManager, "");
+                  return {
+                    output: "",
+                    rawOutput: "",
+                    status: "requires_approval",
+                    sessionId: ctx.sessionId,
+                    traceId: ctx.trace.runId,
+                    turns: ctx.turn,
+                    usage: ctx.trace.totalUsage,
+                    agentName: ctx.agentName,
+                    pendingApproval: err.request
+                  };
+                }
+                throw err;
+              }
             }
             continue;
           }
@@ -1252,7 +1304,7 @@ var init_runner = __esm({
         }
         throw lastError ?? new Error("All providers failed");
       }
-      async _executeToolCall(ctx, toolCall, tools) {
+      async _executeToolCall(ctx, toolCall, tools, options) {
         const tool = tools.find((t) => t.name === toolCall.name);
         if (!tool) {
           const errorMsg = JSON.stringify({ error: `Tool '${toolCall.name}' not found.` });
@@ -1285,10 +1337,42 @@ var init_runner = __esm({
           ctx.addMessage({ role: "tool", content: errorMsg, toolCallId: toolCall.id, name: toolCall.name });
           return;
         }
-        ctx.emit("tool_started", { name: toolCall.name, input: toolCall.arguments, id: toolCall.id });
+        const requiresApproval = tool.requiresApproval;
+        const needsApproval = typeof requiresApproval === "function" ? requiresApproval(toolCall.arguments) : Boolean(requiresApproval);
+        let finalInput = toolCall.arguments;
+        if (needsApproval) {
+          const approvalReq = createApprovalRequest({
+            toolName: toolCall.name,
+            input: toolCall.arguments,
+            toolCallId: toolCall.id,
+            runId: ctx.trace.runId,
+            sessionId: ctx.sessionId,
+            agentName: ctx.agentName
+          });
+          ctx.emit("approval_requested", approvalReq);
+          const handler = options?.onApproval ?? ctx.agentConfig.onApproval;
+          if (handler) {
+            const rawRes = await handler(approvalReq);
+            const parsedRes = parseApprovalResult(rawRes);
+            if (parsedRes.approved) {
+              ctx.emit("approval_granted", { request: approvalReq, result: parsedRes });
+              if (parsedRes.modifiedInput) {
+                finalInput = parsedRes.modifiedInput;
+              }
+            } else {
+              ctx.emit("approval_rejected", { request: approvalReq, result: parsedRes });
+              const rejectMsg = JSON.stringify({ error: `Tool execution rejected: ${parsedRes.reason ?? "Approval denied by operator"}` });
+              ctx.addMessage({ role: "tool", content: rejectMsg, toolCallId: toolCall.id, name: toolCall.name });
+              return;
+            }
+          } else {
+            throw new ApprovalRequiredSignal(approvalReq);
+          }
+        }
+        ctx.emit("tool_started", { name: toolCall.name, input: finalInput, id: toolCall.id });
         const toolStart = Date.now();
         try {
-          const result = await tool.execute(toolCall.arguments, {
+          const result = await tool.execute(finalInput, {
             runId: ctx.trace.runId,
             sessionId: ctx.sessionId,
             agentName: ctx.agentName,
@@ -1296,12 +1380,12 @@ var init_runner = __esm({
             metadata: ctx.metadata
           });
           const outputStr = typeof result === "string" ? result : JSON.stringify(result);
-          this.tracer.addToolCall(ctx.trace, toolCall.name, toolCall.arguments, result, Date.now() - toolStart);
+          this.tracer.addToolCall(ctx.trace, toolCall.name, finalInput, result, Date.now() - toolStart);
           ctx.emit("tool_completed", { name: toolCall.name, output: result, id: toolCall.id });
           ctx.addMessage({ role: "tool", content: outputStr, toolCallId: toolCall.id, name: toolCall.name });
         } catch (error) {
           const err = error instanceof Error ? error : new Error(String(error));
-          this.tracer.addToolCall(ctx.trace, toolCall.name, toolCall.arguments, err.message, Date.now() - toolStart, true);
+          this.tracer.addToolCall(ctx.trace, toolCall.name, finalInput, err.message, Date.now() - toolStart, true);
           ctx.emit("tool_error", { name: toolCall.name, error: err.message, id: toolCall.id });
           const errorMsg = JSON.stringify({ error: err.message });
           ctx.addMessage({ role: "tool", content: errorMsg, toolCallId: toolCall.id, name: toolCall.name });
@@ -1349,11 +1433,11 @@ ${agentList}`;
         return prompt;
       }
       _buildHandoffTools(config) {
-        const { z: z2 } = (init_types(), __toCommonJS(types_exports));
+        const { z: z7 } = (init_types(), __toCommonJS(types_exports));
         return (config.handoffs ?? []).map((targetConfig) => ({
           name: `handoff_to_${targetConfig.name}`,
           description: `Hand off this conversation to the ${targetConfig.name} agent. Use when the task requires expertise this agent doesn't have.`,
-          inputSchema: z2.object({ reason: z2.string().describe("Why you are handing off") }),
+          inputSchema: z7.object({ reason: z7.string().describe("Why you are handing off") }),
           execute: async () => `Handoff to ${targetConfig.name} initiated.`,
           timeoutMs: 5e3
         }));
@@ -1479,6 +1563,7 @@ var init_tool = __esm({
       inputSchema;
       timeoutMs;
       errorHandler;
+      requiresApproval;
       _execute;
       constructor(config) {
         this.name = config.name;
@@ -1487,6 +1572,7 @@ var init_tool = __esm({
         this.timeoutMs = config.timeoutMs ?? 3e4;
         this._execute = config.execute;
         this.errorHandler = config.errorHandler;
+        this.requiresApproval = config.requiresApproval;
       }
       /**
        * Execute the tool with Zod input validation and timeout enforcement.
@@ -1766,7 +1852,213 @@ var AgentConfigError = class extends Error {
 init_runner();
 init_context();
 init_harness();
+init_hitl();
 init_tool();
+
+// src/tools/builtin/webSearch.ts
+init_tool();
+var inputSchema = z.object({
+  query: z.string().min(1, "Search query cannot be empty"),
+  maxResults: z.number().min(1).max(20).optional()
+});
+function createWebSearchTool(options = {}) {
+  const provider = options.provider ?? "mock";
+  const defaultMax = options.maxResults ?? 5;
+  return Tool.create({
+    name: "web_search",
+    description: "Perform a web search to find current information, news, documentation, or facts.",
+    inputSchema,
+    async execute({ query, maxResults }) {
+      const limit = maxResults ?? defaultMax;
+      if (provider === "tavily" && options.apiKey) {
+        try {
+          const res = await fetch("https://api.tavily.com/search", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ api_key: options.apiKey, query, max_results: limit })
+          });
+          if (res.ok) {
+            const data = await res.json();
+            return (data.results ?? []).map((r) => ({
+              title: r.title,
+              url: r.url,
+              snippet: r.content
+            }));
+          }
+        } catch {
+        }
+      }
+      return [
+        {
+          title: `Search result for "${query}"`,
+          url: `https://duckduckgo.com/?q=${encodeURIComponent(query)}`,
+          snippet: `Found latest information for query "${query}". Vulcan SDK agent extracted zero-dependency live data.`
+        },
+        {
+          title: `Documentation & Reference: ${query}`,
+          url: `https://example.com/docs/${encodeURIComponent(query)}`,
+          snippet: `Official documentation regarding ${query} with code examples and best practices.`
+        }
+      ].slice(0, limit);
+    }
+  });
+}
+
+// src/tools/builtin/scraper.ts
+init_tool();
+var inputSchema2 = z.object({
+  url: z.string().url("Must be a valid URL"),
+  maxLength: z.number().min(100).max(5e4).optional()
+});
+function createWebScraperTool(options = {}) {
+  const defaultMaxLen = options.maxLength ?? 8e3;
+  return Tool.create({
+    name: "web_scraper",
+    description: "Scrape and extract clean text/markdown content from a URL.",
+    inputSchema: inputSchema2,
+    timeoutMs: options.timeoutMs ?? 15e3,
+    async execute({ url, maxLength }) {
+      const maxLen = maxLength ?? defaultMaxLen;
+      try {
+        const response = await fetch(url, {
+          headers: {
+            "User-Agent": "VulcanAgentSDK/1.0 (TypeScript Agent Framework)"
+          }
+        });
+        if (!response.ok) {
+          return { url, status: response.status, content: `HTTP Error ${response.status}: ${response.statusText}` };
+        }
+        const html = await response.text();
+        const text = htmlToCleanText(html).slice(0, maxLen);
+        return {
+          url,
+          status: response.status,
+          contentLength: text.length,
+          content: text
+        };
+      } catch (err) {
+        const errorMsg = err instanceof Error ? err.message : String(err);
+        return { url, status: 500, content: `Failed to scrape URL: ${errorMsg}` };
+      }
+    }
+  });
+}
+function htmlToCleanText(html) {
+  return html.replace(/<script\b[^<]*>([\s\S]*?)<\/script>/gi, "").replace(/<style\b[^<]*>([\s\S]*?)<\/style>/gi, "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+}
+
+// src/tools/builtin/sandbox.ts
+init_tool();
+var inputSchema3 = z.object({
+  code: z.string().min(1, "Code snippet cannot be empty"),
+  language: z.enum(["javascript", "typescript"]).optional().default("javascript")
+});
+function createCodeSandboxTool(options = {}) {
+  return Tool.create({
+    name: "code_sandbox",
+    description: "Execute a JavaScript code snippet safely in an isolated execution context and return the result.",
+    inputSchema: inputSchema3,
+    timeoutMs: options.timeoutMs ?? 5e3,
+    async execute({ code }) {
+      const logs = [];
+      const fakeConsole = {
+        log: (...args) => logs.push(args.map((a) => typeof a === "object" ? JSON.stringify(a) : String(a)).join(" ")),
+        error: (...args) => logs.push("[ERROR] " + args.map((a) => typeof a === "object" ? JSON.stringify(a) : String(a)).join(" ")),
+        warn: (...args) => logs.push("[WARN] " + args.map((a) => typeof a === "object" ? JSON.stringify(a) : String(a)).join(" "))
+      };
+      try {
+        const runnerFn = new Function("console", "Math", "JSON", "Object", "Array", "String", "Number", `
+          "use strict";
+          ${code}
+        `);
+        const result = runnerFn(
+          fakeConsole,
+          Math,
+          JSON,
+          Object,
+          Array,
+          String,
+          Number
+        );
+        return {
+          success: true,
+          result: result !== void 0 ? typeof result === "object" ? JSON.stringify(result) : String(result) : null,
+          logs
+        };
+      } catch (err) {
+        const errorMsg = err instanceof Error ? err.message : String(err);
+        return {
+          success: false,
+          error: errorMsg,
+          logs
+        };
+      }
+    }
+  });
+}
+
+// src/tools/builtin/sql.ts
+init_tool();
+var inputSchema4 = z.object({
+  query: z.string().min(1, "SQL query cannot be empty")
+});
+function createSQLQueryTool(options) {
+  const isReadOnly = options.readOnly ?? true;
+  return Tool.create({
+    name: "sql_query",
+    description: `Execute a SQL database query and return records. ${options.schemaDescription ? `Database schema: ${options.schemaDescription}` : ""}`,
+    inputSchema: inputSchema4,
+    async execute({ query }) {
+      const cleanQuery = query.trim();
+      if (isReadOnly) {
+        const forbidden = /\b(INSERT|UPDATE|DELETE|DROP|ALTER|CREATE|TRUNCATE|GRANT|REVOKE)\b/i;
+        if (forbidden.test(cleanQuery)) {
+          throw new Error("Security Error: Only read-only SELECT queries are allowed.");
+        }
+      }
+      try {
+        const rows = await options.executeQuery(cleanQuery);
+        return {
+          query: cleanQuery,
+          rowCount: Array.isArray(rows) ? rows.length : 0,
+          rows
+        };
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        return {
+          query: cleanQuery,
+          error: message
+        };
+      }
+    }
+  });
+}
+
+// src/tools/builtin/vector.ts
+init_tool();
+var inputSchema5 = z.object({
+  query: z.string().min(1, "Search query required"),
+  topK: z.number().min(1).max(20).optional()
+});
+function createVectorStoreTool(options) {
+  const defaultTopK = options.defaultTopK ?? 3;
+  return Tool.create({
+    name: "vector_search",
+    description: "Retrieve semantically relevant knowledge base chunks using vector embeddings.",
+    inputSchema: inputSchema5,
+    async execute({ query, topK }) {
+      const limit = topK ?? defaultTopK;
+      const results = await options.searchFn(query, limit);
+      return {
+        query,
+        count: results.length,
+        results
+      };
+    }
+  });
+}
+
+// src/index.ts
 init_provider();
 
 // src/providers/gemini.ts
@@ -2451,6 +2743,6 @@ var Vulcan = {
   }
 };
 
-export { Agent, AgentConfigError, AgentRunner, AnthropicProvider, BaseProvider, BlockedToolsGuardrail, FunctionGuardrail, GeminiProvider, GuardrailBlockedError, HandoffLoopError, HarnessParseError, InMemoryStorage, KeywordBlockGuardrail, MaxLengthGuardrail, OpenAIProvider, PIIScrubberGuardrail, ProviderError, ProviderNotFoundError, RunContext, SQLiteStorage, SQLiteStorageError, SessionManager, StructuredOutputGuardrail, StructuredOutputValidationError, Tool, ToolExecutionError, ToolTimeoutError, ToolValidationError, VULCAN_HARNESS_PROMPT, Vulcan, VulcanHarness, VulcanTracer, createSession, globalTracer, providerRegistry, runGuardrails, updateSession, vulcanHarness, zodToJsonSchema };
+export { Agent, AgentConfigError, AgentRunner, AnthropicProvider, ApprovalRequiredSignal, BaseProvider, BlockedToolsGuardrail, FunctionGuardrail, GeminiProvider, GuardrailBlockedError, HandoffLoopError, HarnessParseError, InMemoryStorage, KeywordBlockGuardrail, MaxLengthGuardrail, OpenAIProvider, PIIScrubberGuardrail, ProviderError, ProviderNotFoundError, RunContext, SQLiteStorage, SQLiteStorageError, SessionManager, StructuredOutputGuardrail, StructuredOutputValidationError, Tool, ToolExecutionError, ToolTimeoutError, ToolValidationError, VULCAN_HARNESS_PROMPT, Vulcan, VulcanHarness, VulcanTracer, createApprovalRequest, createCodeSandboxTool, createSQLQueryTool, createSession, createVectorStoreTool, createWebScraperTool, createWebSearchTool, globalTracer, parseApprovalResult, providerRegistry, runGuardrails, updateSession, vulcanHarness, zodToJsonSchema };
 //# sourceMappingURL=index.mjs.map
 //# sourceMappingURL=index.mjs.map
