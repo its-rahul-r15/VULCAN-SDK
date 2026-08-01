@@ -1,6 +1,6 @@
 {
   "name": "vulcan-agentic-sdk",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Production-grade AI Agent SDK — multi-provider, typed, observable, and framework-free.",
   "keywords": [
     "ai",
