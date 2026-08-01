@@ -805,6 +805,24 @@ declare class AnthropicProvider extends BaseProvider {
     private _wrapError;
 }
 
+interface GroqProviderOptions {
+    apiKey?: string;
+    baseURL?: string;
+    timeoutMs?: number;
+}
+declare class GroqProvider extends BaseProvider {
+    readonly name = "groq";
+    private apiKey;
+    private baseURL;
+    constructor(apiKey?: string, options?: GroqProviderOptions);
+    private getApiKey;
+    chat(messages: Message[], tools: ToolDefinition[], config: ProviderCallConfig): Promise<ModelResponse>;
+    stream(messages: Message[], tools: ToolDefinition[], config: ProviderCallConfig): AsyncGenerator<StreamChunk>;
+    private _toOpenAIMessages;
+    private _mapFinishReason;
+}
+declare const groqProvider: GroqProvider;
+
 declare function createSession(agentName: string, sessionId?: string): Session;
 declare function updateSession(session: Session, messages: Message[]): Session;
 declare class SessionManager {
@@ -1006,4 +1024,4 @@ declare const Vulcan: {
     stream(agent: Agent, input: string, options?: RunOptions): AsyncGenerator<VulcanEvent, void, any>;
 };
 
-export { Agent, type AgentConfig, AgentConfigError, AgentRunner, AnthropicProvider, type AnthropicToolSchema, type ApprovalHandler, type ApprovalRequest, ApprovalRequiredSignal, type ApprovalResult, BaseProvider, BlockedToolsGuardrail, type CodeSandboxOptions, type FinishReason, FunctionGuardrail, type GeminiFunctionSchema, GeminiProvider, type Guardrail, GuardrailBlockedError, type GuardrailPayload, type GuardrailResult, type GuardrailType, HandoffLoopError, type HandoffRecord, type HarnessMessage, HarnessParseError, type HarnessStep, InMemoryStorage, KeywordBlockGuardrail, MaxLengthGuardrail, type Message, type MessageRole, type ModelCallRecord, type ModelProvider, type ModelResponse, type OpenAIFunctionSchema, OpenAIProvider, PIIScrubberGuardrail, type ProviderCallConfig, ProviderError, ProviderNotFoundError, type ReasoningMode, RunContext, type RunContextLite, type RunOptions, type RunResult, type RunStatus, type SQLQueryOptions, SQLiteStorage, SQLiteStorageError, type Session, SessionManager, type StorageAdapter, type StreamChunk, StructuredOutputGuardrail, StructuredOutputValidationError, type TokenUsage, Tool, type ToolCall, type ToolCallRecord, type ToolDefinition, ToolExecutionError, type ToolResult, ToolTimeoutError, ToolValidationError, type Trace, VULCAN_HARNESS_PROMPT, type VectorSearchResult, type VectorStoreOptions, Vulcan, type VulcanEvent, type VulcanEventType, VulcanHarness, VulcanTracer, type WebScraperOptions, type WebSearchOptions, type WebSearchResult, createApprovalRequest, createCodeSandboxTool, createSQLQueryTool, createSession, createVectorStoreTool, createWebScraperTool, createWebSearchTool, globalTracer, parseApprovalResult, providerRegistry, runGuardrails, updateSession, vulcanHarness, zodToJsonSchema };
+export { Agent, type AgentConfig, AgentConfigError, AgentRunner, AnthropicProvider, type AnthropicToolSchema, type ApprovalHandler, type ApprovalRequest, ApprovalRequiredSignal, type ApprovalResult, BaseProvider, BlockedToolsGuardrail, type CodeSandboxOptions, type FinishReason, FunctionGuardrail, type GeminiFunctionSchema, GeminiProvider, GroqProvider, type Guardrail, GuardrailBlockedError, type GuardrailPayload, type GuardrailResult, type GuardrailType, HandoffLoopError, type HandoffRecord, type HarnessMessage, HarnessParseError, type HarnessStep, InMemoryStorage, KeywordBlockGuardrail, MaxLengthGuardrail, type Message, type MessageRole, type ModelCallRecord, type ModelProvider, type ModelResponse, type OpenAIFunctionSchema, OpenAIProvider, PIIScrubberGuardrail, type ProviderCallConfig, ProviderError, ProviderNotFoundError, type ReasoningMode, RunContext, type RunContextLite, type RunOptions, type RunResult, type RunStatus, type SQLQueryOptions, SQLiteStorage, SQLiteStorageError, type Session, SessionManager, type StorageAdapter, type StreamChunk, StructuredOutputGuardrail, StructuredOutputValidationError, type TokenUsage, Tool, type ToolCall, type ToolCallRecord, type ToolDefinition, ToolExecutionError, type ToolResult, ToolTimeoutError, ToolValidationError, type Trace, VULCAN_HARNESS_PROMPT, type VectorSearchResult, type VectorStoreOptions, Vulcan, type VulcanEvent, type VulcanEventType, VulcanHarness, VulcanTracer, type WebScraperOptions, type WebSearchOptions, type WebSearchResult, createApprovalRequest, createCodeSandboxTool, createSQLQueryTool, createSession, createVectorStoreTool, createWebScraperTool, createWebSearchTool, globalTracer, groqProvider, parseApprovalResult, providerRegistry, runGuardrails, updateSession, vulcanHarness, zodToJsonSchema };

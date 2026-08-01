@@ -47,6 +47,7 @@ export const docsData: Record<string, DocPage> = {
           headers: ['Provider', 'SDK Dependency', 'Default Model', 'Status'],
           rows: [
             ['Google Gemini', '@google/generative-ai', 'gemini-2.5-flash', '✓ Stable'],
+            ['Groq (Llama / DeepSeek)', 'Zero-dep / fetch API', 'llama-3.3-70b-versatile', '✓ Stable'],
             ['OpenAI', 'openai', 'gpt-4o', '✓ Stable'],
             ['Anthropic Claude', '@anthropic-ai/sdk', 'claude-3-5-sonnet-20241022', '✓ Stable'],
           ]

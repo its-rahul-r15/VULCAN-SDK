@@ -856,6 +856,24 @@ __export(runner_exports, {
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
+function resolveProviderName(config, options) {
+  if (options.provider) return options.provider;
+  if (config.providerName) return config.providerName;
+  const model = (config.model || "").toLowerCase();
+  if (model.startsWith("groq/") || model.includes("llama") || model.includes("mixtral") || model.includes("deepseek") || model.includes("gemma")) {
+    return "groq";
+  }
+  if (model.includes("gpt") || model.startsWith("openai/")) {
+    return "openai";
+  }
+  if (model.includes("claude") || model.startsWith("anthropic/")) {
+    return "anthropic";
+  }
+  if (model.includes("gemini") || model.startsWith("google/")) {
+    return "gemini";
+  }
+  return "gemini";
+}
 exports.AgentRunner = void 0; exports.HandoffLoopError = void 0; exports.StructuredOutputValidationError = void 0;
 var init_runner = __esm({
   "src/core/runner.ts"() {
@@ -1279,7 +1297,7 @@ var init_runner = __esm({
       async _callWithRetry(ctx, messages, tools, options) {
         const config = ctx.agentConfig;
         const maxRetries = config.maxRetries ?? 3;
-        const providerName = options.provider ?? config.providerName ?? "gemini";
+        const providerName = resolveProviderName(config, options);
         const fallbacks = config.fallbackProviders ?? [];
         const providerChain = [providerName, ...fallbacks];
         let lastError;
@@ -2573,6 +2591,243 @@ var AnthropicProvider = class extends exports.BaseProvider {
 };
 exports.providerRegistry.register("anthropic", new AnthropicProvider());
 
+// src/providers/groq.ts
+init_provider();
+init_schema();
+var GroqProvider = class extends exports.BaseProvider {
+  name = "groq";
+  apiKey;
+  baseURL;
+  constructor(apiKey, options) {
+    super();
+    this.apiKey = apiKey || process.env.GROQ_API_KEY || "";
+    this.baseURL = options?.baseURL || "https://api.groq.com/openai/v1";
+  }
+  getApiKey() {
+    const key = this.apiKey || process.env.GROQ_API_KEY;
+    if (!key) {
+      throw new exports.ProviderError(
+        "groq",
+        "GROQ_API_KEY environment variable is missing. Get your API key at https://console.groq.com",
+        401
+      );
+    }
+    return key;
+  }
+  async chat(messages, tools, config) {
+    const apiKey = this.getApiKey();
+    const model = normalizeGroqModel(config.model);
+    const formattedMessages = this._toOpenAIMessages(messages);
+    const formattedTools = tools.length > 0 ? tools.map((t) => ({
+      type: "function",
+      function: {
+        name: t.name,
+        description: t.description,
+        parameters: zodToJsonSchema(t.inputSchema)
+      }
+    })) : void 0;
+    const payload = {
+      model,
+      messages: formattedMessages,
+      temperature: config.temperature ?? 0.7
+    };
+    if (formattedTools && formattedTools.length > 0) {
+      payload.tools = formattedTools;
+      payload.tool_choice = "auto";
+    }
+    if (config.maxTokens) {
+      payload.max_tokens = config.maxTokens;
+    }
+    if (config.responseFormat === "json_object") {
+      payload.response_format = { type: "json_object" };
+    }
+    try {
+      const response = await fetch(`${this.baseURL}/chat/completions`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${apiKey}`
+        },
+        body: JSON.stringify(payload)
+      });
+      if (!response.ok) {
+        const errorText = await response.text();
+        let errorJson = {};
+        try {
+          errorJson = JSON.parse(errorText);
+        } catch {
+        }
+        const message = errorJson.error?.message || `Groq API Error HTTP ${response.status}: ${errorText}`;
+        throw new exports.ProviderError("groq", message, response.status, response.status >= 500 || response.status === 429);
+      }
+      const data = await response.json();
+      const choice = data.choices?.[0];
+      if (!choice) {
+        throw new exports.ProviderError("groq", "No choices returned from Groq API", 500);
+      }
+      const toolCalls = (choice.message.tool_calls ?? []).map((tc) => ({
+        id: tc.id,
+        name: tc.function.name,
+        arguments: safeJsonParse(tc.function.arguments)
+      }));
+      const usage = {
+        promptTokens: data.usage?.prompt_tokens ?? 0,
+        completionTokens: data.usage?.completion_tokens ?? 0,
+        totalTokens: data.usage?.total_tokens ?? 0
+      };
+      return {
+        content: choice.message.content ?? "",
+        toolCalls,
+        usage,
+        finishReason: this._mapFinishReason(choice.finish_reason),
+        model: data.model || model
+      };
+    } catch (error) {
+      if (error instanceof exports.ProviderError) throw error;
+      const err = error instanceof Error ? error : new Error(String(error));
+      throw new exports.ProviderError("groq", `Groq request failed: ${err.message}`, 500);
+    }
+  }
+  async *stream(messages, tools, config) {
+    const apiKey = this.getApiKey();
+    const model = normalizeGroqModel(config.model);
+    const formattedMessages = this._toOpenAIMessages(messages);
+    const formattedTools = tools.length > 0 ? tools.map((t) => ({
+      type: "function",
+      function: {
+        name: t.name,
+        description: t.description,
+        parameters: zodToJsonSchema(t.inputSchema)
+      }
+    })) : void 0;
+    const payload = {
+      model,
+      messages: formattedMessages,
+      stream: true,
+      temperature: config.temperature ?? 0.7
+    };
+    if (formattedTools && formattedTools.length > 0) {
+      payload.tools = formattedTools;
+      payload.tool_choice = "auto";
+    }
+    if (config.maxTokens) {
+      payload.max_tokens = config.maxTokens;
+    }
+    try {
+      const response = await fetch(`${this.baseURL}/chat/completions`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${apiKey}`
+        },
+        body: JSON.stringify(payload)
+      });
+      if (!response.ok || !response.body) {
+        const errorText = await response.text();
+        throw new exports.ProviderError("groq", `Groq stream error (${response.status}): ${errorText}`, response.status);
+      }
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder("utf-8");
+      let buffer = "";
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() ?? "";
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (!trimmed || trimmed.startsWith(":")) continue;
+          if (trimmed === "data: [DONE]") {
+            yield { type: "done" };
+            return;
+          }
+          if (trimmed.startsWith("data: ")) {
+            const rawData = trimmed.slice(6);
+            try {
+              const parsed = JSON.parse(rawData);
+              const delta = parsed.choices?.[0]?.delta;
+              if (delta?.content) {
+                yield { type: "text_delta", content: delta.content };
+              }
+              if (delta?.tool_calls) {
+                for (const tc of delta.tool_calls) {
+                  yield {
+                    type: "tool_call_delta",
+                    toolCall: {
+                      id: tc.id,
+                      name: tc.function?.name,
+                      arguments: tc.function?.arguments ? safeJsonParse(tc.function.arguments) : void 0
+                    }
+                  };
+                }
+              }
+            } catch {
+            }
+          }
+        }
+      }
+    } catch (error) {
+      if (error instanceof exports.ProviderError) throw error;
+      const err = error instanceof Error ? error : new Error(String(error));
+      throw new exports.ProviderError("groq", `Groq stream failed: ${err.message}`, 500);
+    }
+    yield { type: "done" };
+  }
+  _toOpenAIMessages(messages) {
+    return messages.map((m) => {
+      if (m.role === "system") return { role: "system", content: m.content };
+      if (m.role === "user") return { role: "user", content: m.content };
+      if (m.role === "assistant") {
+        return {
+          role: "assistant",
+          content: m.content || null,
+          tool_calls: m.toolCalls && m.toolCalls.length > 0 ? m.toolCalls.map((tc) => ({
+            id: tc.id,
+            type: "function",
+            function: {
+              name: tc.name,
+              arguments: JSON.stringify(tc.arguments)
+            }
+          })) : void 0
+        };
+      }
+      if (m.role === "tool") {
+        return {
+          role: "tool",
+          tool_call_id: m.toolCallId ?? "",
+          content: m.content
+        };
+      }
+      return { role: "user", content: m.content };
+    });
+  }
+  _mapFinishReason(reason) {
+    if (reason === "stop") return "stop";
+    if (reason === "tool_calls") return "tool_calls";
+    if (reason === "length") return "length";
+    return "stop";
+  }
+};
+function normalizeGroqModel(model) {
+  if (!model) return "llama-3.3-70b-versatile";
+  const cleaned = model.replace(/^groq\//i, "");
+  if (cleaned === "llama-3.3-70b" || cleaned === "llama3.3") return "llama-3.3-70b-versatile";
+  if (cleaned === "llama-3.1-8b" || cleaned === "llama3.1") return "llama-3.1-8b-instant";
+  if (cleaned === "deepseek-r1") return "deepseek-r1-distill-llama-70b";
+  return cleaned;
+}
+function safeJsonParse(jsonStr) {
+  if (!jsonStr) return {};
+  try {
+    return JSON.parse(jsonStr);
+  } catch {
+    return { raw: jsonStr };
+  }
+}
+var groqProvider = new GroqProvider();
+exports.providerRegistry.register("groq", groqProvider);
+
 // src/index.ts
 init_session();
 init_in_memory();
@@ -2756,6 +3011,7 @@ exports.Agent = Agent;
 exports.AgentConfigError = AgentConfigError;
 exports.AnthropicProvider = AnthropicProvider;
 exports.GeminiProvider = GeminiProvider;
+exports.GroqProvider = GroqProvider;
 exports.OpenAIProvider = OpenAIProvider;
 exports.SQLiteStorage = SQLiteStorage;
 exports.SQLiteStorageError = SQLiteStorageError;
@@ -2767,6 +3023,7 @@ exports.createSession = createSession;
 exports.createVectorStoreTool = createVectorStoreTool;
 exports.createWebScraperTool = createWebScraperTool;
 exports.createWebSearchTool = createWebSearchTool;
+exports.groqProvider = groqProvider;
 exports.parseApprovalResult = parseApprovalResult;
 exports.runGuardrails = runGuardrails;
 exports.updateSession = updateSession;

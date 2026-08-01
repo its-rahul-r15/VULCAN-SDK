@@ -14,17 +14,27 @@ const COMPANIES_LIST = [
 ]
 
 // ── Models list for Hero Selector ──────────────────────────────────────────
-// Real Vulcan SDK supported models only
+// Real Vulcan SDK supported models
 const HERO_MODELS = [
+  { id: 'groq/llama-3.3-70b-versatile', name: 'Llama 3.3 70B (Groq)', provider: 'Groq', icon: 'groq' },
   { id: 'openai/gpt-4o', name: 'GPT-4o', provider: 'OpenAI', icon: 'openai' },
   { id: 'anthropic/claude-3-5-sonnet', name: 'Claude 3.5 Sonnet', provider: 'Anthropic', icon: 'anthropic' },
   { id: 'google/gemini-2.5-flash', name: 'Gemini 2.5 Flash', provider: 'Google', icon: 'gemini' },
+  { id: 'groq/deepseek-r1-distill-llama-70b', name: 'DeepSeek R1 (Groq)', provider: 'Groq', icon: 'groq' },
+  { id: 'groq/llama-3.1-8b-instant', name: 'Llama 3.1 8B (Groq)', provider: 'Groq', icon: 'groq' },
   { id: 'openai/gpt-4o-mini', name: 'GPT-4o Mini', provider: 'OpenAI', icon: 'openai' },
   { id: 'anthropic/claude-3-haiku', name: 'Claude 3 Haiku', provider: 'Anthropic', icon: 'anthropic' },
   { id: 'google/gemini-2.5-pro', name: 'Gemini 2.5 Pro', provider: 'Google', icon: 'gemini' },
 ]
 
 function ProviderIcon({ type, size = 15 }) {
+  if (type === 'groq') {
+    return (
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+      </svg>
+    )
+  }
   if (type === 'openai') {
     return (
       <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
@@ -328,12 +338,13 @@ export function LandingPage({ onViewChange, theme }) {
       {/* ══════════════════════════════════════════════════════════════════════
           §1 HERO
       ══════════════════════════════════════════════════════════════════════ */}
-      <section style={{
+      <section className="hero-section" style={{
         position: 'relative',
         zIndex: 10,
         maxWidth: '1280px',
         margin: '0 auto',
         padding: '72px 40px 80px',
+        boxSizing: 'border-box',
       }}>
         {/* light mode mesh */}
         {!isDark && (
@@ -348,35 +359,40 @@ export function LandingPage({ onViewChange, theme }) {
           className="hero-grid">
 
           {/* ── Left column ── */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0', paddingTop: '12px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0', paddingTop: '12px', minWidth: 0 }}>
 
             {/* Headline */}
-            <h1 style={{
-              fontSize: 'clamp(32px, 4vw, 52px)',
+            <h1 className="hero-headline" style={{
+              fontSize: 'clamp(26px, 5vw, 52px)',
               fontWeight: 700,
-              letterSpacing: '-2px',
-              lineHeight: 1.1,
-              margin: '0 0 20px',
+              letterSpacing: '-1.2px',
+              lineHeight: 1.16,
+              margin: '0 0 16px',
               color: s.textPrimary,
+              wordBreak: 'normal',
+              overflowWrap: 'break-word',
             }}>
               Type-safe AI agents.<br />
               <span style={{ color: '#0070f3' }}>Zero framework bloat.</span>
             </h1>
 
             {/* Subtitle */}
-            <p style={{
-              fontSize: '16px',
-              lineHeight: '1.7',
+            <p className="hero-subtitle" style={{
+              fontSize: 'clamp(14px, 3.5vw, 16px)',
+              lineHeight: '1.65',
               color: s.textSecondary,
               maxWidth: '460px',
-              margin: '0 0 28px',
+              width: '100%',
+              margin: '0 0 24px',
+              wordBreak: 'normal',
+              overflowWrap: 'break-word',
             }}>
               Build resilient, multi-turn agent workflows with Zod-validated tools,
               cycle-blocking handoffs, and custom safety guardrails — all in TypeScript.
             </p>
 
             {/* CTA row */}
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', marginBottom: '28px' }}>
+            <div className="hero-cta-row" style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', marginBottom: '24px', width: '100%', boxSizing: 'border-box' }}>
               <button
                 onClick={() => onViewChange('docs')}
                 style={{
@@ -385,6 +401,7 @@ export function LandingPage({ onViewChange, theme }) {
                   color: isDark ? '#000' : '#fff',
                   fontSize: '13.5px', fontWeight: 600, border: 'none', cursor: 'pointer',
                   transition: 'opacity 0.15s',
+                  display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
                 }}
                 onMouseEnter={e => e.currentTarget.style.opacity = '0.85'}
                 onMouseLeave={e => e.currentTarget.style.opacity = '1'}
@@ -393,42 +410,47 @@ export function LandingPage({ onViewChange, theme }) {
               </button>
 
               <button
+                className="hero-copy-btn"
                 onClick={copyInstall}
                 style={{
-                  height: '42px', padding: '0 18px', borderRadius: '999px',
+                  height: '42px', padding: '0 16px', borderRadius: '999px',
                   background: isDark ? '#000' : '#fff',
                   border: `1px solid ${isDark ? '#2a2a2a' : '#ddd'}`,
                   color: isDark ? '#a1a1a1' : '#555',
                   fontSize: '12px', fontFamily: 'var(--font-mono)', cursor: 'pointer',
-                  display: 'flex', alignItems: 'center', gap: '10px',
+                  display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
                   transition: 'border-color 0.15s, color 0.15s',
+                  maxWidth: '100%', boxSizing: 'border-box',
                 }}
                 onMouseEnter={e => { e.currentTarget.style.borderColor = '#0070f3'; e.currentTarget.style.color = isDark ? '#fff' : '#111' }}
                 onMouseLeave={e => { e.currentTarget.style.borderColor = isDark ? '#2a2a2a' : '#ddd'; e.currentTarget.style.color = isDark ? '#a1a1a1' : '#555' }}
               >
-                <span style={{ color: '#0070f3', fontWeight: 700 }}>$</span>
-                <span>npm i vulcan-agentic-sdk</span>
-                <span style={{ color: copied ? '#4ade80' : '#666', fontSize: '11px' }}>
+                <span style={{ color: '#0070f3', fontWeight: 700, flexShrink: 0 }}>$</span>
+                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>npm i vulcan-agentic-sdk</span>
+                <span style={{ color: copied ? '#4ade80' : '#666', fontSize: '11px', flexShrink: 0 }}>
                   {copied ? '✓ Copied' : '⎘'}
                 </span>
               </button>
             </div>
 
             {/* Real verifiable facts only */}
-            <div style={{
-              display: 'flex', flexWrap: 'wrap', gap: '20px',
+            <div className="hero-metrics-row" style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(4, 1fr)',
+              gap: '16px',
               borderTop: `1px solid ${s.border}`,
               paddingTop: '20px',
+              width: '100%',
             }}>
               {[
                 { value: '< 50kb', label: 'gzipped' },
                 { value: 'MIT', label: 'License' },
                 { value: 'v1.1', label: 'Stable' },
-                { value: '3', label: 'LLM Providers' },
+                { value: '4', label: 'LLM Providers' },
               ].map(m => (
                 <div key={m.label} style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: '13px', fontWeight: 700, color: s.textPrimary }}>{m.value}</span>
-                  <span style={{ fontSize: '11px', color: s.textSecondary, fontFamily: 'var(--font-mono)', letterSpacing: '0.04em' }}>{m.label}</span>
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: '13px', fontWeight: 700, color: s.textPrimary, whiteSpace: 'nowrap' }}>{m.value}</span>
+                  <span style={{ fontSize: '11px', color: s.textSecondary, fontFamily: 'var(--font-mono)', letterSpacing: '0.02em', whiteSpace: 'nowrap' }}>{m.label}</span>
                 </div>
               ))}
             </div>
@@ -454,9 +476,8 @@ export function LandingPage({ onViewChange, theme }) {
                       <button
                         key={tab}
                         onClick={() => setHeroTab(tab)}
-                        className={`px-3.5 sm:px-4 py-2 text-[12px] font-sans transition border-r border-[#1a1a1a] cursor-pointer whitespace-nowrap ${
-                          isActive ? 'bg-[#111111] text-white font-semibold' : 'bg-transparent text-[#777777] hover:text-[#cccccc]'
-                        }`}
+                        className={`px-3.5 sm:px-4 py-2 text-[12px] font-sans transition border-r border-[#1a1a1a] cursor-pointer whitespace-nowrap ${isActive ? 'bg-[#111111] text-white font-semibold' : 'bg-transparent text-[#777777] hover:text-[#cccccc]'
+                          }`}
                       >{tab}</button>
                     )
                   })}
@@ -465,7 +486,7 @@ export function LandingPage({ onViewChange, theme }) {
 
               {/* Code Body with Line Numbers */}
               <div style={{ padding: '16px 18px 20px', height: '265px', overflowY: 'auto', overflowX: 'auto', background: '#000' }}>
-                <pre style={{ margin: 0, fontSize: '12px', lineHeight: '1.75', fontFamily: 'var(--font-mono)' }}>
+                <pre style={{ margin: 0, fontSize: '12px', lineHeight: '1.75', fontFamily: 'var(--font-mono)', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
                   {(() => {
                     const codeStr = getHeroCodeString(heroTab, selectedModel.id)
                     const lines = codeStr.split('\n')
@@ -634,7 +655,7 @@ export function LandingPage({ onViewChange, theme }) {
                   <span style={{
                     fontSize: '12px', color: '#666',
                     fontFamily: 'system-ui, -apple-system, sans-serif',
-                  }}>Use With AI Gateway</span>
+                  }}><span className="hidden sm:inline">Use With </span>AI Gateway</span>
                   <button
                     onClick={() => setUseGateway(!useGateway)}
                     style={{
@@ -795,21 +816,19 @@ export function LandingPage({ onViewChange, theme }) {
           <div className="flex md:hidden items-center justify-center gap-2 mb-4">
             <button
               onClick={() => setMobileCompareTab('vulcan')}
-              className={`px-4 py-2 rounded-full text-xs font-semibold transition ${
-                mobileCompareTab === 'vulcan'
+              className={`px-4 py-2 rounded-full text-xs font-semibold transition ${mobileCompareTab === 'vulcan'
                   ? 'bg-[#0070f3] text-white shadow-md'
                   : 'bg-[#111111] text-[#888888] border border-[#222222]'
-              }`}
+                }`}
             >
               ⚡ WITH VULCAN (Clean)
             </button>
             <button
               onClick={() => setMobileCompareTab('langchain')}
-              className={`px-4 py-2 rounded-full text-xs font-semibold transition ${
-                mobileCompareTab === 'langchain'
+              className={`px-4 py-2 rounded-full text-xs font-semibold transition ${mobileCompareTab === 'langchain'
                   ? 'bg-[#ef4444] text-white shadow-md'
                   : 'bg-[#111111] text-[#888888] border border-[#222222]'
-              }`}
+                }`}
             >
               BEFORE — LangChain
             </button>
@@ -1449,11 +1468,30 @@ const result = await app.invoke({ messages: [input] })`}</pre>
       {/* Responsive styles */}
       <style>{`
         @media (max-width: 900px) {
-          .hero-grid { grid-template-columns: 1fr !important; gap: 32px !important; }
+          .hero-grid { grid-template-columns: 1fr !important; gap: 36px !important; }
         }
         @media (max-width: 640px) {
-          section { padding-left: 16px !important; padding-right: 16px !important; }
-          footer { padding-left: 16px !important; padding-right: 16px !important; }
+          .hero-section { padding: 32px 16px 44px !important; overflow-x: hidden !important; width: 100% !important; box-sizing: border-box !important; text-align: center !important; }
+          .hero-headline { font-size: 25px !important; letter-spacing: -0.5px !important; line-height: 1.22 !important; text-align: center !important; margin-left: auto !important; margin-right: auto !important; word-break: normal !important; overflow-wrap: break-word !important; }
+          .hero-subtitle { font-size: 14px !important; line-height: 1.6 !important; margin-bottom: 20px !important; max-width: 100% !important; text-align: center !important; margin-left: auto !important; margin-right: auto !important; word-break: normal !important; overflow-wrap: break-word !important; }
+          .hero-cta-row { display: flex !important; flex-direction: column !important; align-items: center !important; justify-content: center !important; width: 100% !important; gap: 10px !important; margin-left: auto !important; margin-right: auto !important; }
+          .hero-cta-row button { width: 100% !important; max-width: 320px !important; margin: 0 auto !important; display: flex !important; justify-content: center !important; align-items: center !important; text-align: center !important; min-width: 0 !important; box-sizing: border-box !important; }
+          .hero-copy-btn { font-size: 11.5px !important; padding: 0 12px !important; }
+          .hero-metrics-row { grid-template-columns: repeat(2, 1fr) !important; gap: 14px 12px !important; text-align: center !important; max-width: 300px !important; margin-left: auto !important; margin-right: auto !important; }
+          .hero-metrics-row > div { align-items: center !important; text-align: center !important; }
+          section { padding-left: 16px !important; padding-right: 16px !important; box-sizing: border-box !important; }
+          footer { padding-left: 16px !important; padding-right: 16px !important; box-sizing: border-box !important; }
+        }
+        @media (max-width: 380px) {
+          .hero-section { padding: 24px 12px 36px !important; }
+          .hero-headline { font-size: 22px !important; letter-spacing: -0.4px !important; line-height: 1.24 !important; }
+          .hero-subtitle { font-size: 13px !important; line-height: 1.55 !important; margin-bottom: 16px !important; }
+          .hero-cta-row button { max-width: 100% !important; height: 38px !important; font-size: 12px !important; }
+          .hero-copy-btn { font-size: 10.5px !important; padding: 0 8px !important; gap: 5px !important; }
+          .hero-metrics-row { gap: 10px 8px !important; max-width: 100% !important; }
+          .hero-metrics-row span { font-size: 11.5px !important; }
+          section { padding-left: 12px !important; padding-right: 12px !important; }
+          footer { padding-left: 12px !important; padding-right: 12px !important; }
         }
       `}</style>
     </main>

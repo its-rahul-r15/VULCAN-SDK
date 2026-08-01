@@ -60,6 +60,7 @@ export type { ModelProvider } from './providers/provider.js'
 export { GeminiProvider } from './providers/gemini.js'
 export { OpenAIProvider } from './providers/openai.js'
 export { AnthropicProvider } from './providers/anthropic.js'
+export { GroqProvider, groqProvider } from './providers/groq.js'
 
 // ─────────────────────────────────────────────
 // Memory & Sessions

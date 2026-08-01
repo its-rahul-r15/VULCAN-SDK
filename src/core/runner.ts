@@ -584,7 +584,7 @@ export class AgentRunner {
   ): Promise<ModelResponse> {
     const config = ctx.agentConfig
     const maxRetries = config.maxRetries ?? 3
-    const providerName = options.provider ?? config.providerName ?? 'gemini'
+    const providerName = resolveProviderName(config, options)
     const fallbacks = config.fallbackProviders ?? []
     const providerChain = [providerName, ...fallbacks]
 
@@ -856,4 +856,30 @@ type ToolDefinition = import('../types/index.js').ToolDefinition
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
+function resolveProviderName(config: AgentConfig, options: RunOptions): string {
+  if (options.provider) return options.provider
+  if (config.providerName) return config.providerName
+
+  const model = (config.model || '').toLowerCase()
+  if (
+    model.startsWith('groq/') ||
+    model.includes('llama') ||
+    model.includes('mixtral') ||
+    model.includes('deepseek') ||
+    model.includes('gemma')
+  ) {
+    return 'groq'
+  }
+  if (model.includes('gpt') || model.startsWith('openai/')) {
+    return 'openai'
+  }
+  if (model.includes('claude') || model.startsWith('anthropic/')) {
+    return 'anthropic'
+  }
+  if (model.includes('gemini') || model.startsWith('google/')) {
+    return 'gemini'
+  }
+  return 'gemini'
 }

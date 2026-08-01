@@ -23,11 +23,11 @@ export function Header({ currentView, onViewChange, theme, onToggleTheme }) {
           <span style={{ color: '#0070f3', fontSize: '11px', fontFamily: 'var(--font-mono)', fontWeight: 700, flexShrink: 0 }}>
             ⚡ NEW v1.1.0
           </span>
-          <span className="hidden md:inline" style={{ color: '#a1a1a1', fontSize: '12px', letterSpacing: '0.01em' }}>
-            Vulcan v1.1.0 is live on npm — Built-in Tools (Web Search, Scraper, Sandbox, SQL, RAG) & HITL Approvals.
+          <span className="hidden sm:inline" style={{ color: '#a1a1a1', fontSize: '12px', letterSpacing: '0.01em' }}>
+            Vulcan v1.1.0 is live on npm — Built-in Tools (Search, Scraper, Sandbox, SQL) & HITL.
           </span>
-          <span className="inline md:hidden" style={{ color: '#a1a1a1', fontSize: '11.5px', letterSpacing: '0.01em' }}>
-            Vulcan v1.1.0 live on npm — Tools & HITL
+          <span className="inline sm:hidden" style={{ color: '#a1a1a1', fontSize: '10.5px', letterSpacing: '0.01em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '170px' }}>
+            v1.1.0 live on npm
           </span>
           <a
             href="https://www.npmjs.com/package/vulcan-agentic-sdk"
