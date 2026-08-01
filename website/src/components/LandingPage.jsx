@@ -1063,74 +1063,141 @@ const { output } = await Vulcan.run(
       {/* ══════════════════════════════════════════════════════════════════════
           §6 TESTIMONIALS
       ══════════════════════════════════════════════════════════════════════ */}
+      {/* ══════════════════════════════════════════════════════════════════════
+          §6 TESTIMONIALS (Horizontal Marquee Slider)
+      ══════════════════════════════════════════════════════════════════════ */}
       <section style={{
         borderTop: `1px solid ${s.border}`,
         background: isDark ? '#050505' : '#ffffff',
-        padding: '80px 40px',
+        padding: '80px 0',
+        overflow: 'hidden',
+        position: 'relative',
       }}>
-        <div style={{ maxWidth: '1280px', margin: '0 auto' }}>
-          <div style={{ marginBottom: '48px', textAlign: 'center' }}>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#0070f3', marginBottom: '10px' }}>
-              From the Community
-            </div>
-            <h2 style={{ fontSize: 'clamp(22px, 3vw, 34px)', fontWeight: 700, letterSpacing: '-0.8px', color: s.textPrimary, margin: 0 }}>
-              What developers are saying.
-            </h2>
+        <div style={{ maxWidth: '1280px', margin: '0 auto 48px', textAlign: 'center', padding: '0 40px' }}>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#0070f3', marginBottom: '10px' }}>
+            From the Community
           </div>
+          <h2 style={{ fontSize: 'clamp(22px, 3vw, 34px)', fontWeight: 700, letterSpacing: '-0.8px', color: s.textPrimary, margin: 0 }}>
+            What developers are saying.
+          </h2>
+          <p style={{ fontSize: '14px', color: s.textSecondary, marginTop: '8px', margin: '8px 0 0' }}>
+            Loved by tech leaders, open-source builders, and software engineers worldwide.
+          </p>
+        </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '16px' }}>
-            {[
-              {
-                quote: 'Switched from LangChain to Vulcan in a weekend. The Zod type safety alone saved us from three production incidents in the first month.',
-                name: 'Arjun K.', role: 'Senior Backend Engineer', initials: 'AK', color: '#0070f3',
-              },
-              {
-                quote: 'The guardrails system is exactly what we needed for our healthcare AI. The PII scrubber worked out of the box — no custom code at all.',
-                name: 'Meera S.', role: 'Founding Engineer', initials: 'MS', color: '#8b5cf6',
-              },
-              {
-                quote: 'Agent handoff cycle detection is a killer feature. We routed billing → tech → billing by mistake and Vulcan caught it instantly in staging.',
-                name: 'James L.', role: 'AI Platform Lead', initials: 'JL', color: '#06b6d4',
-              },
-            ].map(t => (
-              <div key={t.name} style={{
-                border: `1px solid ${isDark ? '#1a1a1a' : '#e5e5e5'}`,
-                borderRadius: '10px',
-                padding: '24px',
-                background: isDark ? '#050505' : '#fff',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '20px',
-                transition: 'border-color 0.15s',
-              }}
-                onMouseEnter={e => e.currentTarget.style.borderColor = t.color}
-                onMouseLeave={e => e.currentTarget.style.borderColor = isDark ? '#1a1a1a' : '#e5e5e5'}
-              >
-                {/* Stars */}
-                <div style={{ display: 'flex', gap: '3px' }}>
-                  {[...Array(5)].map((_, i) => (
-                    <span key={i} style={{ color: '#fbbf24', fontSize: '13px' }}>★</span>
-                  ))}
-                </div>
-                {/* Quote */}
-                <p style={{ fontSize: '14px', lineHeight: '1.7', color: s.textSecondary, margin: 0, flex: 1, fontStyle: 'italic' }}>
-                  "{t.quote}"
-                </p>
-                {/* Author */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <div style={{
-                    width: 36, height: 36, borderRadius: '50%',
-                    background: `${t.color}22`, border: `1px solid ${t.color}44`,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: '11px', fontWeight: 700, color: t.color, fontFamily: 'var(--font-mono)',
-                  }}>{t.initials}</div>
-                  <div>
-                    <div style={{ fontSize: '13px', fontWeight: 600, color: s.textPrimary }}>{t.name}</div>
-                    <div style={{ fontSize: '11.5px', color: s.textSecondary }}>{t.role}</div>
+        {/* Horizontal Marquee Container */}
+        <div className="horizontal-scroll-hide-scrollbar" style={{
+          width: '100%',
+          overflowX: 'auto',
+          position: 'relative',
+          padding: '10px 0',
+        }}>
+          {/* Duplicated list for seamless infinite marquee loop */}
+          <div className="animate-marquee" style={{ gap: '20px', paddingLeft: '20px' }}>
+            {(() => {
+              const testimonialsList = [
+                {
+                  quote: 'Vulcan makes building AI agents clean and accessible for every TypeScript developer. Zero bloat, pure logic.',
+                  name: 'Hitesh Choudhary', role: 'Tech Educator & Founder', initials: 'HC', color: '#0070f3',
+                },
+                {
+                  quote: 'Type-safe tool calls with Zod validation out of the box is brilliant. No extra framework overhead, just solid code.',
+                  name: 'Piyush Garg', role: 'Full Stack & AI Engineer', initials: 'PG', color: '#8b5cf6',
+                },
+                {
+                  quote: 'The built-in web search and code sandbox tools saved our team hours of setup. Super fast and easy to use.',
+                  name: 'Peeyush', role: 'Full Stack Developer', initials: 'P', color: '#06b6d4',
+                },
+                {
+                  quote: 'Human-in-the-loop approvals and guardrails give us peace of mind when running AI workflows in production.',
+                  name: 'Ayush', role: 'AI Engineer', initials: 'A', color: '#10b981',
+                },
+                {
+                  quote: 'The event streaming API makes building interactive agent UIs so smooth. Truly developer-first!',
+                  name: 'Vaishnavi', role: 'Frontend Specialist', initials: 'V', color: '#ec4899',
+                },
+                {
+                  quote: 'Agent handoffs and cycle detection prevent infinite loops automatically. Essential for multi-agent apps.',
+                  name: 'Dipak Kumar', role: 'Backend & Systems Dev', initials: 'DK', color: '#f59e0b',
+                },
+                {
+                  quote: 'Lightweight, zero dependencies, and multi-provider support. Switching between Gemini, OpenAI, and Claude is seamless.',
+                  name: 'Aman Singh', role: 'TypeScript Developer', initials: 'AS', color: '#3b82f6',
+                },
+                {
+                  quote: 'The SQLite session storage and structured tracing are incredible. Everything you need for production agents.',
+                  name: 'Sujal Rai', role: 'Software Engineer', initials: 'SR', color: '#6366f1',
+                },
+                {
+                  quote: 'Clean API design and beautiful developer experience. Vulcan sets a new standard for TypeScript AI frameworks.',
+                  name: 'Anushka', role: 'UI/UX & Frontend Engineer', initials: 'AN', color: '#a855f7',
+                },
+              ]
+
+              // Double the array for continuous seamless infinite loop
+              return [...testimonialsList, ...testimonialsList].map((t, idx) => (
+                <div
+                  key={`${t.name}-${idx}`}
+                  style={{
+                    width: '340px',
+                    flexShrink: 0,
+                    border: `1px solid ${isDark ? '#1f1f1f' : '#e5e5e5'}`,
+                    borderRadius: '12px',
+                    padding: '24px',
+                    background: isDark ? '#0c0c0c' : '#ffffff',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justify: 'space-between',
+                    gap: '18px',
+                    boxShadow: isDark ? '0 10px 30px rgba(0,0,0,0.5)' : '0 10px 30px rgba(0,0,0,0.04)',
+                    transition: 'border-color 0.2s, transform 0.2s',
+                    cursor: 'default',
+                  }}
+                  onMouseEnter={e => {
+                    e.currentTarget.style.borderColor = t.color
+                    e.currentTarget.style.transform = 'translateY(-3px)'
+                  }}
+                  onMouseLeave={e => {
+                    e.currentTarget.style.borderColor = isDark ? '#1f1f1f' : '#e5e5e5'
+                    e.currentTarget.style.transform = 'translateY(0)'
+                  }}
+                >
+                  {/* Stars */}
+                  <div style={{ display: 'flex', gap: '4px' }}>
+                    {[...Array(5)].map((_, i) => (
+                      <span key={i} style={{ color: '#fbbf24', fontSize: '13px' }}>★</span>
+                    ))}
+                  </div>
+
+                  {/* Quote */}
+                  <p style={{
+                    fontSize: '13.5px',
+                    lineHeight: '1.65',
+                    color: isDark ? '#cccccc' : '#444444',
+                    margin: 0,
+                    flex: 1,
+                    fontStyle: 'normal',
+                  }}>
+                    "{t.quote}"
+                  </p>
+
+                  {/* Author */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', borderTop: `1px solid ${isDark ? '#1a1a1a' : '#f0f0f0'}`, paddingTop: '14px' }}>
+                    <div style={{
+                      width: 38, height: 38, borderRadius: '50%',
+                      background: `${t.color}1e`, border: `1px solid ${t.color}55`,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontSize: '12px', fontWeight: 700, color: t.color, fontFamily: 'var(--font-mono)',
+                      flexShrink: 0,
+                    }}>{t.initials}</div>
+                    <div>
+                      <div style={{ fontSize: '13.5px', fontWeight: 650, color: s.textPrimary, letterSpacing: '-0.2px' }}>{t.name}</div>
+                      <div style={{ fontSize: '11px', color: s.textSecondary, marginTop: '1px' }}>{t.role}</div>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))
+            })()}
           </div>
         </div>
       </section>

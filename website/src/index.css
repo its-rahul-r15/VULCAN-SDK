@@ -167,3 +167,27 @@
 pre, code {
   font-family: var(--font-mono);
 }
+
+/* ── Testimonials Horizontal Marquee Animation ── */
+@keyframes marqueeScroll {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.animate-marquee {
+  display: flex;
+  width: max-content;
+  animation: marqueeScroll 45s linear infinite;
+}
+
+.animate-marquee:hover {
+  animation-play-state: paused;
+}
+
+.horizontal-scroll-hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.horizontal-scroll-hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
