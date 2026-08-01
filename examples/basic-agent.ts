@@ -20,14 +20,8 @@ const calculatorTool = Vulcan.createTool({
     b: z.number().describe('Second number'),
   }),
   async execute({ operation, a, b }) {
-    switch (operation) {
-      case 'add':      return { result: a + b }
-      case 'subtract': return { result: a - b }
-      case 'multiply': return { result: a * b }
-      case 'divide':
-        if (b === 0) throw new Error('Cannot divide by zero')
-        return { result: a / b }
-    }
+    const ops = { add: a + b, subtract: a - b, multiply: a * b, divide: a / b }
+    return { result: ops[operation] }
   },
   errorHandler: (error) => `Calculation failed: ${error.message}`,
 })

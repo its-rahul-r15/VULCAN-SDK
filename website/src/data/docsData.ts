@@ -127,22 +127,16 @@ ANTHROPIC_API_KEY="sk-ant-api03-..."`,
 
 const calculatorTool = Vulcan.createTool({
   name: 'calculator',
-  description: 'Perform basic arithmetic operations. Use this for all math.',
+  description: 'Perform basic math calculations: add, subtract, multiply, divide.',
   inputSchema: z.object({
     operation: z.enum(['add', 'subtract', 'multiply', 'divide']),
-    a: z.number().describe('First operand'),
-    b: z.number().describe('Second operand'),
+    a: z.number(),
+    b: z.number(),
   }),
   async execute({ operation, a, b }) {
-    switch (operation) {
-      case 'add':      return { result: a + b }
-      case 'subtract': return { result: a - b }
-      case 'multiply': return { result: a * b }
-      case 'divide':
-        if (b === 0) throw new Error('Division by zero is not allowed')
-        return { result: a / b }
-    }
-  }
+    const math = { add: a + b, subtract: a - b, multiply: a * b, divide: a / b }
+    return { result: math[operation] }
+  },
 })`,
         codeLanguage: 'typescript',
       },
@@ -151,9 +145,7 @@ const calculatorTool = Vulcan.createTool({
         content: 'Agents are defined with a name, system instructions, and an array of tools. The instructions guide the LLM\'s behavior. Keep them precise and task-focused.',
         code: `const mathAgent = Vulcan.createAgent({
   name: 'math-helper',
-  instructions: \`You are a precise math assistant.
-Always use the calculator tool for arithmetic operations.
-Never guess results — always call the tool.\`,
+  instructions: \`You are a math assistant. Always use the calculator tool for arithmetic calculations.\`,
   model: 'gemini-2.5-flash', // optional — this is the default
   tools: [calculatorTool],
 })`,
@@ -167,14 +159,49 @@ Never guess results — always call the tool.\`,
 
   console.log('Output:', result.output)
   // → "128 multiplied by 37 is 4,736."
-
-  console.log('Trace ID:', result.traceId)
-  console.log('Turns used:', result.turns)
 }
 
 main()`,
         codeLanguage: 'typescript',
-        callout: { type: 'tip', text: 'Run with npx tsx your-file.ts for instant TypeScript execution without a build step.' },
+        callout: { type: 'tip', text: 'Run with npx tsx agent.ts for instant TypeScript execution without a build step.' },
+      },
+      {
+        title: 'Complete 1-File Working Script',
+        content: 'Here is the full, self-contained single-file code you can copy-paste and run immediately:',
+        code: `import { Vulcan, z } from 'vulcan-agentic-sdk'
+
+// 1. Define a tool with Zod schema validation
+const calculatorTool = Vulcan.createTool({
+  name: 'calculator',
+  description: 'Perform basic math calculations: add, subtract, multiply, divide.',
+  inputSchema: z.object({
+    operation: z.enum(['add', 'subtract', 'multiply', 'divide']),
+    a: z.number(),
+    b: z.number(),
+  }),
+  async execute({ operation, a, b }) {
+    const math = { add: a + b, subtract: a - b, multiply: a * b, divide: a / b }
+    return { result: math[operation] }
+  },
+})
+
+// 2. Create the agent
+const mathAgent = Vulcan.createAgent({
+  name: 'math-helper',
+  instructions: 'You are a math assistant. Always use the calculator tool for math.',
+  tools: [calculatorTool],
+})
+
+// 3. Run the agent
+async function main() {
+  const result = await Vulcan.run(mathAgent, 'What is 128 multiplied by 37?')
+  console.log('Output:', result.output)
+  // → "128 multiplied by 37 is 4,736."
+}
+
+main()`,
+        codeLanguage: 'typescript',
+        callout: { type: 'tip', text: 'Save as agent.ts and execute with: npx tsx agent.ts' },
       },
       {
         title: 'Multi-Turn Conversations',
