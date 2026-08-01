@@ -73,6 +73,54 @@ function CalloutBox({ type, text, isDark }) {
   )
 }
 
+function highlightCodeLine(line, language) {
+  if (!line || line.trim() === '') return '&nbsp;'
+  
+  // Bash / Terminal comments & prompt
+  if (language === 'bash' || language === 'shell') {
+    if (line.trim().startsWith('#')) return `<span style="color:#555555;font-style:italic">${escapeHtml(line)}</span>`
+    return line.replace(/^(\$|npm|pnpm|yarn|npx)\b/g, '<span style="color:#0070f3;font-weight:600">$1</span>')
+      .replace(/(\binstall|add|run|build|test|\-g|\-\-save|\-D)\b/g, '<span style="color:#50e3c2">$1</span>')
+  }
+
+  // Comments
+  if (line.trim().startsWith('//')) {
+    return `<span style="color:#555555;font-style:italic">${escapeHtml(line)}</span>`
+  }
+
+  let html = escapeHtml(line)
+
+  // 1. Comments inline
+  html = html.replace(/(\/\/.+$)/g, '<span style="color:#555555;font-style:italic">$1</span>')
+
+  // 2. Strings ('...', "...", `...`)
+  html = html.replace(/('[^']*'|"[^"]*"|`[^`]*`)/g, '<span style="color:#9ecbff">$1</span>')
+
+  // 3. Keywords
+  html = html.replace(/\b(import|from|export|const|let|var|await|async|return|new|function|class|if|else|try|catch|for|of|in|type|interface|default|typeof)\b/g, '<span style="color:#79b8ff;font-weight:500">$1</span>')
+
+  // 4. Vulcan / Core Classes & Framework symbols
+  html = html.replace(/\b(Vulcan|Tool|Agent|AgentRunner|RunContext|PIIScrubberGuardrail|MaxLengthGuardrail|KeywordBlockGuardrail|FunctionGuardrail|BlockedToolsGuardrail|SQLiteStorage|InMemoryStorage|globalTracer)\b/g, '<span style="color:#ffab70;font-weight:600">$1</span>')
+
+  // 5. Functions / Methods / Zod helpers
+  html = html.replace(/\b(createAgent|createTool|run|stream|generateStructured|createWebSearchTool|createWebScraperTool|createCodeSandboxTool|createSQLQueryTool|createVectorStoreTool|execute|errorHandler|onApproval|z|object|string|number|boolean|enum|array|url|min|max|optional|describe)\b(?=\s*\(|\s*:)/g, '<span style="color:#b39ddb">$1</span>')
+
+  // 6. Booleans & Special Values
+  html = html.replace(/\b(true|false|null|undefined)\b/g, '<span style="color:#50e3c2;font-weight:600">$1</span>')
+
+  // 7. Numbers
+  html = html.replace(/\b(\d+)\b/g, '<span style="color:#fbbf24">$1</span>')
+
+  return html
+}
+
+function escapeHtml(str) {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+}
+
 function CodeBlock({ code, language, isDark }) {
   const [copied, setCopied] = useState(false)
 
@@ -82,13 +130,16 @@ function CodeBlock({ code, language, isDark }) {
     setTimeout(() => setCopied(false), 2000)
   }
 
+  const lines = code.trim().split('\n')
+
   return (
     <div style={{
-      border: `1px solid ${isDark ? '#262626' : '#e5e5e5'}`,
-      borderRadius: '8px',
+      border: `1px solid ${isDark ? '#262626' : '#e0e0e0'}`,
+      borderRadius: '10px',
       overflow: 'hidden',
-      background: '#0a0a0a',
-      boxShadow: isDark ? '0 4px 12px rgba(0,0,0,0.4)' : '0 2px 8px rgba(0,0,0,0.08)',
+      background: '#09090b',
+      boxShadow: isDark ? '0 10px 30px rgba(0,0,0,0.6)' : '0 4px 16px rgba(0,0,0,0.08)',
+      margin: '8px 0 16px',
     }}>
       {/* Header bar */}
       <div style={{
@@ -96,56 +147,76 @@ function CodeBlock({ code, language, isDark }) {
         alignItems: 'center',
         justifyContent: 'space-between',
         background: '#000000',
-        borderBottom: '1px solid #1a1a1a',
-        padding: '8px 14px',
+        borderBottom: '1px solid #1f1f1f',
+        padding: '9px 16px',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          {/* traffic lights */}
-          <div style={{ display: 'flex', gap: '5px' }}>
+          {/* Traffic lights */}
+          <div style={{ display: 'flex', gap: '5.5px' }}>
             <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#ff5f56', display: 'inline-block' }} />
             <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#ffbd2e', display: 'inline-block' }} />
             <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#27c93f', display: 'inline-block' }} />
           </div>
           <span style={{
-            color: '#555',
-            fontSize: '11px',
+            color: '#777777',
+            fontSize: '11.5px',
             fontFamily: 'var(--font-mono)',
-            letterSpacing: '0.08em',
+            letterSpacing: '0.06em',
             textTransform: 'uppercase',
-            marginLeft: '4px',
+            marginLeft: '6px',
+            fontWeight: 600,
           }}>
-            {language ?? 'code'}
+            {language ?? 'typescript'}
           </span>
         </div>
         <button
           onClick={copy}
           style={{
-            color: copied ? '#4ade80' : '#666',
-            background: 'transparent',
-            border: 'none',
+            color: copied ? '#4ade80' : '#888888',
+            background: copied ? 'rgba(74,222,128,0.1)' : 'rgba(255,255,255,0.05)',
+            border: `1px solid ${copied ? 'rgba(74,222,128,0.3)' : 'rgba(255,255,255,0.1)'}`,
             cursor: 'pointer',
             fontSize: '11px',
             fontFamily: 'var(--font-mono)',
             letterSpacing: '0.05em',
-            padding: '2px 6px',
-            borderRadius: '4px',
-            transition: 'color 0.15s',
+            padding: '3px 9px',
+            borderRadius: '5px',
+            transition: 'all 0.15s',
           }}
+          onMouseEnter={e => { if (!copied) e.currentTarget.style.color = '#ffffff' }}
+          onMouseLeave={e => { if (!copied) e.currentTarget.style.color = '#888888' }}
         >
           {copied ? '✓ Copied' : 'Copy'}
         </button>
       </div>
-      {/* Code content */}
-      <div style={{ overflowX: 'auto', padding: '16px 18px', maxHeight: '420px', overflowY: 'auto' }}>
+
+      {/* Code content body with line numbers */}
+      <div style={{ overflowX: 'auto', padding: '18px 20px', maxHeight: '460px', overflowY: 'auto', background: '#09090b' }}>
         <pre style={{
           margin: 0,
-          color: '#d4d4d4',
           fontSize: '13px',
-          lineHeight: '1.7',
+          lineHeight: '1.75',
           fontFamily: 'var(--font-mono)',
           textAlign: 'left',
         }}>
-          <code>{code}</code>
+          <div style={{ display: 'flex', gap: '18px' }}>
+            {/* Line numbers */}
+            <div style={{ userSelect: 'none', opacity: 0.3, textAlign: 'right', minWidth: '18px', color: '#888888' }}>
+              {lines.map((_, idx) => (
+                <div key={idx}>{idx + 1}</div>
+              ))}
+            </div>
+            {/* Colored code lines */}
+            <div style={{ flex: 1, color: '#e4e4e7' }}>
+              {lines.map((line, idx) => (
+                <span
+                  key={idx}
+                  style={{ display: 'block' }}
+                  dangerouslySetInnerHTML={{ __html: highlightCodeLine(line, language) }}
+                />
+              ))}
+            </div>
+          </div>
         </pre>
       </div>
     </div>

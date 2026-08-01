@@ -16,41 +16,41 @@ function ProviderIcon({ type, size = 15 }) {
   if (type === 'openai') {
     return (
       <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
-        <path d="M22.2819 9.8211a5.9847 5.9847 0 0 0-.5157-4.9108 6.0462 6.0462 0 0 0-6.5098-2.9A6.0651 6.0651 0 0 0 4.9807 4.1818a5.9847 5.9847 0 0 0-3.9977 2.9 6.0462 6.0462 0 0 0 .7427 7.0966 5.98 5.98 0 0 0 .511 4.9107 6.051 6.051 0 0 0 6.5146 2.9001A5.9847 5.9847 0 0 0 13.2599 24a6.0557 6.0557 0 0 0 5.7718-4.2058 5.9894 5.9894 0 0 0 3.9977-2.9001 6.0557 6.0557 0 0 0-.7475-7.0729zm-9.022 12.6081a4.4755 4.4755 0 0 1-2.8764-1.0408l.1419-.0804 4.7783-2.7582a.7948.7948 0 0 0 .3927-.6813v-6.7369l2.02 1.1686a.071.071 0 0 1 .038.052v5.5826a4.504 4.504 0 0 1-4.4945 4.4944zm-9.6607-4.1254a4.4708 4.4708 0 0 1-.535-3.0137l.142.0852 4.783 2.7582a.7712.7712 0 0 0 .7806 0l5.8428-3.3685v2.3324a.0804.0804 0 0 1-.0332.0615L11.74 19.9542a4.4992 4.4992 0 0 1-6.1408-1.6504zm-1.562-9.6006a4.4755 4.4755 0 0 1 2.3414-1.9735V12.491a.7854.7854 0 0 0 .3927.6813l5.8334 3.3685-2.02 1.1686a.071.071 0 0 1-.0615.0047l-4.8398-2.7913a4.504 4.504 0 0 1-1.6462-6.1428zm13.4735-3.08a4.4708 4.4708 0 0 1 .535 3.0136l-.142-.0852-4.783-2.7582a.7712.7712 0 0 0-.7806 0L4.54 9.6644V7.332a.0804.0804 0 0 1 .0332-.0615l4.783-2.763a4.4992 4.4992 0 0 1 6.1408 1.6505zm1.562 9.6006a4.4755 4.4755 0 0 1-2.3414 1.9735v-5.7607a.7854.7854 0 0 0-.3927-.6813L13.52 10.49l2.02-1.1686a.071.071 0 0 1 .0615-.0047l4.8398 2.7913a4.504 4.504 0 0 1 1.6462 6.1428zM12 13.9142l-3.321-1.9168 3.321-1.9168 3.321 1.9168z"/>
+        <path d="M22.2819 9.8211a5.9847 5.9847 0 0 0-.5157-4.9108 6.0462 6.0462 0 0 0-6.5098-2.9A6.0651 6.0651 0 0 0 4.9807 4.1818a5.9847 5.9847 0 0 0-3.9977 2.9 6.0462 6.0462 0 0 0 .7427 7.0966 5.98 5.98 0 0 0 .511 4.9107 6.051 6.051 0 0 0 6.5146 2.9001A5.9847 5.9847 0 0 0 13.2599 24a6.0557 6.0557 0 0 0 5.7718-4.2058 5.9894 5.9894 0 0 0 3.9977-2.9001 6.0557 6.0557 0 0 0-.7475-7.0729zm-9.022 12.6081a4.4755 4.4755 0 0 1-2.8764-1.0408l.1419-.0804 4.7783-2.7582a.7948.7948 0 0 0 .3927-.6813v-6.7369l2.02 1.1686a.071.071 0 0 1 .038.052v5.5826a4.504 4.504 0 0 1-4.4945 4.4944zm-9.6607-4.1254a4.4708 4.4708 0 0 1-.535-3.0137l.142.0852 4.783 2.7582a.7712.7712 0 0 0 .7806 0l5.8428-3.3685v2.3324a.0804.0804 0 0 1-.0332.0615L11.74 19.9542a4.4992 4.4992 0 0 1-6.1408-1.6504zm-1.562-9.6006a4.4755 4.4755 0 0 1 2.3414-1.9735V12.491a.7854.7854 0 0 0 .3927.6813l5.8334 3.3685-2.02 1.1686a.071.071 0 0 1-.0615.0047l-4.8398-2.7913a4.504 4.504 0 0 1-1.6462-6.1428zm13.4735-3.08a4.4708 4.4708 0 0 1 .535 3.0136l-.142-.0852-4.783-2.7582a.7712.7712 0 0 0-.7806 0L4.54 9.6644V7.332a.0804.0804 0 0 1 .0332-.0615l4.783-2.763a4.4992 4.4992 0 0 1 6.1408 1.6505zm1.562 9.6006a4.4755 4.4755 0 0 1-2.3414 1.9735v-5.7607a.7854.7854 0 0 0-.3927-.6813L13.52 10.49l2.02-1.1686a.071.071 0 0 1 .0615-.0047l4.8398 2.7913a4.504 4.504 0 0 1 1.6462 6.1428zM12 13.9142l-3.321-1.9168 3.321-1.9168 3.321 1.9168z" />
       </svg>
     )
   }
   if (type === 'gemini') {
     return (
       <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
-        <path d="M12 0C12 6.627 6.627 12 0 12C6.627 12 12 17.373 12 24C12 17.373 17.373 12 24 12C17.373 12 12 6.627 12 0Z"/>
+        <path d="M12 0C12 6.627 6.627 12 0 12C6.627 12 12 17.373 12 24C12 17.373 17.373 12 24 12C17.373 12 12 6.627 12 0Z" />
       </svg>
     )
   }
   if (type === 'anthropic') {
     return (
       <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
-        <path d="M17.472 3.003h-3.644L7.544 20.997h3.644l1.378-3.791h5.811l1.378 3.791h3.644L17.472 3.003zm-3.69 11.236l2.122-5.834 2.122 5.834h-4.244zM2.6 20.997h3.644L12.528 3.003H8.884L2.6 20.997z"/>
+        <path d="M17.472 3.003h-3.644L7.544 20.997h3.644l1.378-3.791h5.811l1.378 3.791h3.644L17.472 3.003zm-3.69 11.236l2.122-5.834 2.122 5.834h-4.244zM2.6 20.997h3.644L12.528 3.003H8.884L2.6 20.997z" />
       </svg>
     )
   }
   if (type === 'meta') {
     return (
       <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
-        <path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm1 14.5h-2v-5h2v5zm0-7h-2V7.5h2v2z"/>
+        <path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm1 14.5h-2v-5h2v5zm0-7h-2V7.5h2v2z" />
       </svg>
     )
   }
   if (type === 'mistral') {
     return (
       <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
-        <path d="M4 4h4v4H4V4zm12 0h4v4h-4V4zM4 10h4v4H4v-4zm6 0h4v4h-4v-4zm6 0h4v4h-4v-4zM4 16h4v4H4v-4zm12 0h4v4h-4v-4z"/>
+        <path d="M4 4h4v4H4V4zm12 0h4v4h-4V4zM4 10h4v4H4v-4zm6 0h4v4h-4v-4zm6 0h4v4h-4v-4zM4 16h4v4H4v-4zm12 0h4v4h-4v-4z" />
       </svg>
     )
   }
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
-      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
     </svg>
   )
 }
@@ -480,14 +480,15 @@ export function LandingPage({ onViewChange, theme }) {
 
                             return (
                               <span key={i} style={{ display: 'block', color }}
-                                dangerouslySetInnerHTML={{ __html:
-                                  highlighted
-                                    .replace(/<kw>/g, '<span style="color:#79b8ff">')
-                                    .replace(/<\/kw>/g, '</span>')
-                                    .replace(/<mod>/g, '<span style="color:#50e3c2;font-weight:600">')
-                                    .replace(/<\/mod>/g, '</span>')
-                                    .replace(/<str>/g, '<span style="color:#9ecbff">')
-                                    .replace(/<\/str>/g, '</span>')
+                                dangerouslySetInnerHTML={{
+                                  __html:
+                                    highlighted
+                                      .replace(/<kw>/g, '<span style="color:#79b8ff">')
+                                      .replace(/<\/kw>/g, '</span>')
+                                      .replace(/<mod>/g, '<span style="color:#50e3c2;font-weight:600">')
+                                      .replace(/<\/mod>/g, '</span>')
+                                      .replace(/<str>/g, '<span style="color:#9ecbff">')
+                                      .replace(/<\/str>/g, '</span>')
                                     || '&nbsp;'
                                 }}
                               />
@@ -553,7 +554,7 @@ export function LandingPage({ onViewChange, theme }) {
                         background: '#111111',
                       }}>
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#555" strokeWidth="2.5">
-                          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
+                          <circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" />
                         </svg>
                         <input
                           type="text"
@@ -607,7 +608,7 @@ export function LandingPage({ onViewChange, theme }) {
                               </div>
                               {isSel && (
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#aaaaaa" strokeWidth="2.5">
-                                  <path d="M20 6L9 17l-5-5"/>
+                                  <path d="M20 6L9 17l-5-5" />
                                 </svg>
                               )}
                             </button>
@@ -690,7 +691,7 @@ export function LandingPage({ onViewChange, theme }) {
               onMouseLeave={e => { e.currentTarget.style.opacity = isDark ? '0.85' : '0.8'; e.currentTarget.style.transform = 'translateY(0)' }}
             >
               <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 0C12 6.627 6.627 12 0 12C6.627 12 12 17.373 12 24C12 17.373 17.373 12 24 12C17.373 12 12 6.627 12 0Z"/>
+                <path d="M12 0C12 6.627 6.627 12 0 12C6.627 12 12 17.373 12 24C12 17.373 17.373 12 24 12C17.373 12 12 6.627 12 0Z" />
               </svg>
               <span style={{ fontWeight: 650, fontSize: '15px', letterSpacing: '-0.3px', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
                 Google <span style={{ fontWeight: 400, opacity: 0.8 }}>Gemini</span>
@@ -712,7 +713,7 @@ export function LandingPage({ onViewChange, theme }) {
               onMouseLeave={e => { e.currentTarget.style.opacity = isDark ? '0.85' : '0.8'; e.currentTarget.style.transform = 'translateY(0)' }}
             >
               <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M22.2819 9.8211a5.9847 5.9847 0 0 0-.5157-4.9108 6.0462 6.0462 0 0 0-6.5098-2.9A6.0651 6.0651 0 0 0 4.9807 4.1818a5.9847 5.9847 0 0 0-3.9977 2.9 6.0462 6.0462 0 0 0 .7427 7.0966 5.98 5.98 0 0 0 .511 4.9107 6.051 6.051 0 0 0 6.5146 2.9001A5.9847 5.9847 0 0 0 13.2599 24a6.0557 6.0557 0 0 0 5.7718-4.2058 5.9894 5.9894 0 0 0 3.9977-2.9001 6.0557 6.0557 0 0 0-.7475-7.0729zm-9.022 12.6081a4.4755 4.4755 0 0 1-2.8764-1.0408l.1419-.0804 4.7783-2.7582a.7948.7948 0 0 0 .3927-.6813v-6.7369l2.02 1.1686a.071.071 0 0 1 .038.052v5.5826a4.504 4.504 0 0 1-4.4945 4.4944zm-9.6607-4.1254a4.4708 4.4708 0 0 1-.535-3.0137l.142.0852 4.783 2.7582a.7712.7712 0 0 0 .7806 0l5.8428-3.3685v2.3324a.0804.0804 0 0 1-.0332.0615L11.74 19.9542a4.4992 4.4992 0 0 1-6.1408-1.6504zm-1.562-9.6006a4.4755 4.4755 0 0 1 2.3414-1.9735V12.491a.7854.7854 0 0 0 .3927.6813l5.8334 3.3685-2.02 1.1686a.071.071 0 0 1-.0615.0047l-4.8398-2.7913a4.504 4.504 0 0 1-1.6462-6.1428zm13.4735-3.08a4.4708 4.4708 0 0 1 .535 3.0136l-.142-.0852-4.783-2.7582a.7712.7712 0 0 0-.7806 0L4.54 9.6644V7.332a.0804.0804 0 0 1 .0332-.0615l4.783-2.763a4.4992 4.4992 0 0 1 6.1408 1.6505zm1.562 9.6006a4.4755 4.4755 0 0 1-2.3414 1.9735v-5.7607a.7854.7854 0 0 0-.3927-.6813L13.52 10.49l2.02-1.1686a.071.071 0 0 1 .0615-.0047l4.8398 2.7913a4.504 4.504 0 0 1 1.6462 6.1428zM12 13.9142l-3.321-1.9168 3.321-1.9168 3.321 1.9168z"/>
+                <path d="M22.2819 9.8211a5.9847 5.9847 0 0 0-.5157-4.9108 6.0462 6.0462 0 0 0-6.5098-2.9A6.0651 6.0651 0 0 0 4.9807 4.1818a5.9847 5.9847 0 0 0-3.9977 2.9 6.0462 6.0462 0 0 0 .7427 7.0966 5.98 5.98 0 0 0 .511 4.9107 6.051 6.051 0 0 0 6.5146 2.9001A5.9847 5.9847 0 0 0 13.2599 24a6.0557 6.0557 0 0 0 5.7718-4.2058 5.9894 5.9894 0 0 0 3.9977-2.9001 6.0557 6.0557 0 0 0-.7475-7.0729zm-9.022 12.6081a4.4755 4.4755 0 0 1-2.8764-1.0408l.1419-.0804 4.7783-2.7582a.7948.7948 0 0 0 .3927-.6813v-6.7369l2.02 1.1686a.071.071 0 0 1 .038.052v5.5826a4.504 4.504 0 0 1-4.4945 4.4944zm-9.6607-4.1254a4.4708 4.4708 0 0 1-.535-3.0137l.142.0852 4.783 2.7582a.7712.7712 0 0 0 .7806 0l5.8428-3.3685v2.3324a.0804.0804 0 0 1-.0332.0615L11.74 19.9542a4.4992 4.4992 0 0 1-6.1408-1.6504zm-1.562-9.6006a4.4755 4.4755 0 0 1 2.3414-1.9735V12.491a.7854.7854 0 0 0 .3927.6813l5.8334 3.3685-2.02 1.1686a.071.071 0 0 1-.0615.0047l-4.8398-2.7913a4.504 4.504 0 0 1-1.6462-6.1428zm13.4735-3.08a4.4708 4.4708 0 0 1 .535 3.0136l-.142-.0852-4.783-2.7582a.7712.7712 0 0 0-.7806 0L4.54 9.6644V7.332a.0804.0804 0 0 1 .0332-.0615l4.783-2.763a4.4992 4.4992 0 0 1 6.1408 1.6505zm1.562 9.6006a4.4755 4.4755 0 0 1-2.3414 1.9735v-5.7607a.7854.7854 0 0 0-.3927-.6813L13.52 10.49l2.02-1.1686a.071.071 0 0 1 .0615-.0047l4.8398 2.7913a4.504 4.504 0 0 1 1.6462 6.1428zM12 13.9142l-3.321-1.9168 3.321-1.9168 3.321 1.9168z" />
               </svg>
               <span style={{ fontWeight: 700, fontSize: '16px', letterSpacing: '-0.4px', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
                 OpenAI
@@ -734,7 +735,7 @@ export function LandingPage({ onViewChange, theme }) {
               onMouseLeave={e => { e.currentTarget.style.opacity = isDark ? '0.85' : '0.8'; e.currentTarget.style.transform = 'translateY(0)' }}
             >
               <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M17.472 3.003h-3.644L7.544 20.997h3.644l1.378-3.791h5.811l1.378 3.791h3.644L17.472 3.003zm-3.69 11.236l2.122-5.834 2.122 5.834h-4.244zM2.6 20.997h3.644L12.528 3.003H8.884L2.6 20.997z"/>
+                <path d="M17.472 3.003h-3.644L7.544 20.997h3.644l1.378-3.791h5.811l1.378 3.791h3.644L17.472 3.003zm-3.69 11.236l2.122-5.834 2.122 5.834h-4.244zM2.6 20.997h3.644L12.528 3.003H8.884L2.6 20.997z" />
               </svg>
               <span style={{ fontWeight: 600, fontSize: '15.5px', letterSpacing: '-0.2px', fontFamily: 'Georgia, serif', fontStyle: 'italic' }}>
                 Anthropic
@@ -756,7 +757,7 @@ export function LandingPage({ onViewChange, theme }) {
               onMouseLeave={e => { e.currentTarget.style.opacity = isDark ? '0.85' : '0.8'; e.currentTarget.style.transform = 'translateY(0)' }}
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M1.125 0C.507 0 0 .507 0 1.125v21.75C0 23.493.507 24 1.125 24h21.75c.618 0 1.125-.507 1.125-1.125V1.125C24 .507 23.493 0 22.875 0H1.125zm17.363 9.75c.612 0 1.154.037 1.627.111a6.38 6.38 0 0 1 1.306.34v2.458a3.95 3.95 0 0 0-.643-.361 5.093 5.093 0 0 0-.79-.263 6.814 6.814 0 0 0-.916-.165 6.13 6.13 0 0 0-1.022-.075c-.504 0-.9.083-1.189.25-.288.166-.432.427-.432.783 0 .23.056.417.168.562.112.145.267.266.465.362.198.096.435.18.71.25.277.072.587.149.93.232.493.118.948.261 1.365.43.417.168.77.387 1.058.657.288.27.506.597.654.981.148.384.222.846.222 1.387 0 .762-.162 1.41-.486 1.944a4.343 4.343 0 0 1-1.353 1.373c-.58.337-1.272.576-2.077.717-.805.141-1.685.212-2.64.212-.876 0-1.7-.08-2.472-.24a10.026 10.026 0 0 1-2.037-.674v-2.64c.732.435 1.5.766 2.304.993.805.227 1.62.34 2.447.34.54 0 .977-.087 1.312-.262.335-.175.503-.45.503-.825 0-.255-.062-.46-.188-.615a1.8 1.8 0 0 0-.495-.412c-.205-.105-.445-.195-.72-.27-.275-.075-.572-.152-.892-.232-.51-.128-.977-.282-1.402-.462a3.844 3.844 0 0 1-1.088-.705 2.87 2.87 0 0 1-.682-1.012c-.158-.415-.237-.91-.237-1.485 0-.743.167-1.373.502-1.89.335-.518.803-.934 1.403-1.248.6-.315 1.315-.536 2.145-.664.83-.128 1.738-.192 2.723-.192zm-8.895 2.37v11.755H6.555V12.12H2.25V9.875h12.72v2.245H9.593z"/>
+                <path d="M1.125 0C.507 0 0 .507 0 1.125v21.75C0 23.493.507 24 1.125 24h21.75c.618 0 1.125-.507 1.125-1.125V1.125C24 .507 23.493 0 22.875 0H1.125zm17.363 9.75c.612 0 1.154.037 1.627.111a6.38 6.38 0 0 1 1.306.34v2.458a3.95 3.95 0 0 0-.643-.361 5.093 5.093 0 0 0-.79-.263 6.814 6.814 0 0 0-.916-.165 6.13 6.13 0 0 0-1.022-.075c-.504 0-.9.083-1.189.25-.288.166-.432.427-.432.783 0 .23.056.417.168.562.112.145.267.266.465.362.198.096.435.18.71.25.277.072.587.149.93.232.493.118.948.261 1.365.43.417.168.77.387 1.058.657.288.27.506.597.654.981.148.384.222.846.222 1.387 0 .762-.162 1.41-.486 1.944a4.343 4.343 0 0 1-1.353 1.373c-.58.337-1.272.576-2.077.717-.805.141-1.685.212-2.64.212-.876 0-1.7-.08-2.472-.24a10.026 10.026 0 0 1-2.037-.674v-2.64c.732.435 1.5.766 2.304.993.805.227 1.62.34 2.447.34.54 0 .977-.087 1.312-.262.335-.175.503-.45.503-.825 0-.255-.062-.46-.188-.615a1.8 1.8 0 0 0-.495-.412c-.205-.105-.445-.195-.72-.27-.275-.075-.572-.152-.892-.232-.51-.128-.977-.282-1.402-.462a3.844 3.844 0 0 1-1.088-.705 2.87 2.87 0 0 1-.682-1.012c-.158-.415-.237-.91-.237-1.485 0-.743.167-1.373.502-1.89.335-.518.803-.934 1.403-1.248.6-.315 1.315-.536 2.145-.664.83-.128 1.738-.192 2.723-.192zm-8.895 2.37v11.755H6.555V12.12H2.25V9.875h12.72v2.245H9.593z" />
               </svg>
               <span style={{ fontWeight: 600, fontSize: '14.5px', letterSpacing: '-0.3px', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
                 TypeScript
@@ -778,7 +779,7 @@ export function LandingPage({ onViewChange, theme }) {
               onMouseLeave={e => { e.currentTarget.style.opacity = isDark ? '0.85' : '0.8'; e.currentTarget.style.transform = 'translateY(0)' }}
             >
               <svg width="19" height="19" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M3.75 3h16.5A.75.75 0 0121 3.75v3a.75.75 0 01-.75.75H8.31l12.19 11.25a.75.75 0 01.25.55v4.2a.75.75 0 01-.75.75H3.75a.75.75 0 01-.75-.75v-3a.75.75 0 01.75-.75h11.94L3.5 8.55A.75.75 0 013.25 8V3.75A.75.75 0 013.75 3z"/>
+                <path d="M3.75 3h16.5A.75.75 0 0121 3.75v3a.75.75 0 01-.75.75H8.31l12.19 11.25a.75.75 0 01.25.55v4.2a.75.75 0 01-.75.75H3.75a.75.75 0 01-.75-.75v-3a.75.75 0 01.75-.75h11.94L3.5 8.55A.75.75 0 013.25 8V3.75A.75.75 0 013.75 3z" />
               </svg>
               <span style={{ fontWeight: 700, fontSize: '15.5px', letterSpacing: '0.4px', fontFamily: 'var(--font-mono)' }}>
                 ZOD
@@ -800,7 +801,7 @@ export function LandingPage({ onViewChange, theme }) {
               onMouseLeave={e => { e.currentTarget.style.opacity = isDark ? '0.85' : '0.8'; e.currentTarget.style.transform = 'translateY(0)' }}
             >
               <svg width="19" height="19" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 1.5a1.5 1.5 0 0 0-.75.2l-8.25 4.76A1.5 1.5 0 0 0 2.25 7.76v9.48a1.5 1.5 0 0 0 .75 1.3l8.25 4.76a1.5 1.5 0 0 0 1.5 0l8.25-4.76a1.5 1.5 0 0 0 .75-1.3V7.76a1.5 1.5 0 0 0-.75-1.3L12.75 1.7A1.5 1.5 0 0 0 12 1.5zm-1.5 6.75h3a.75.75 0 0 1 .75.75v6a.75.75 0 0 1-.75.75h-3a.75.75 0 0 1-.75-.75v-6a.75.75 0 0 1 .75-.75z"/>
+                <path d="M12 1.5a1.5 1.5 0 0 0-.75.2l-8.25 4.76A1.5 1.5 0 0 0 2.25 7.76v9.48a1.5 1.5 0 0 0 .75 1.3l8.25 4.76a1.5 1.5 0 0 0 1.5 0l8.25-4.76a1.5 1.5 0 0 0 .75-1.3V7.76a1.5 1.5 0 0 0-.75-1.3L12.75 1.7A1.5 1.5 0 0 0 12 1.5zm-1.5 6.75h3a.75.75 0 0 1 .75.75v6a.75.75 0 0 1-.75.75h-3a.75.75 0 0 1-.75-.75v-6a.75.75 0 0 1 .75-.75z" />
               </svg>
               <span style={{ fontWeight: 650, fontSize: '15px', letterSpacing: '-0.3px', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
                 Node.js
@@ -1085,119 +1086,144 @@ const { output } = await Vulcan.run(
           </p>
         </div>
 
-        {/* Horizontal Marquee Container */}
-        <div className="horizontal-scroll-hide-scrollbar" style={{
+        {/* Horizontal Marquee Container with Left & Right Gradient Blur Overlays */}
+        <div style={{
           width: '100%',
-          overflowX: 'auto',
           position: 'relative',
           padding: '10px 0',
         }}>
+          {/* Left Edge Gradient Fade */}
+          <div style={{
+            position: 'absolute',
+            top: 0,
+            bottom: 0,
+            left: 0,
+            width: '140px',
+            zIndex: 10,
+            pointerEvents: 'none',
+            background: `linear-gradient(to right, ${isDark ? '#050505' : '#ffffff'} 0%, transparent 100%)`,
+          }} />
+
+          {/* Right Edge Gradient Fade */}
+          <div style={{
+            position: 'absolute',
+            top: 0,
+            bottom: 0,
+            right: 0,
+            width: '140px',
+            zIndex: 10,
+            pointerEvents: 'none',
+            background: `linear-gradient(to left, ${isDark ? '#050505' : '#ffffff'} 0%, transparent 100%)`,
+          }} />
+
           {/* Duplicated list for seamless infinite marquee loop */}
-          <div className="animate-marquee" style={{ gap: '20px', paddingLeft: '20px' }}>
-            {(() => {
-              const testimonialsList = [
-                {
-                  quote: 'Vulcan makes building AI agents clean and accessible for every TypeScript developer. Zero bloat, pure logic.',
-                  name: 'Hitesh Choudhary', role: 'Tech Educator & Founder', initials: 'HC', color: '#0070f3',
-                },
-                {
-                  quote: 'Type-safe tool calls with Zod validation out of the box is brilliant. No extra framework overhead, just solid code.',
-                  name: 'Piyush Garg', role: 'Full Stack & AI Engineer', initials: 'PG', color: '#8b5cf6',
-                },
-                {
-                  quote: 'The built-in web search and code sandbox tools saved our team hours of setup. Super fast and easy to use.',
-                  name: 'Peeyush', role: 'Full Stack Developer', initials: 'P', color: '#06b6d4',
-                },
-                {
-                  quote: 'Human-in-the-loop approvals and guardrails give us peace of mind when running AI workflows in production.',
-                  name: 'Ayush', role: 'AI Engineer', initials: 'A', color: '#10b981',
-                },
-                {
-                  quote: 'The event streaming API makes building interactive agent UIs so smooth. Truly developer-first!',
-                  name: 'Vaishnavi', role: 'Frontend Specialist', initials: 'V', color: '#ec4899',
-                },
-                {
-                  quote: 'Agent handoffs and cycle detection prevent infinite loops automatically. Essential for multi-agent apps.',
-                  name: 'Dipak Kumar', role: 'Backend & Systems Dev', initials: 'DK', color: '#f59e0b',
-                },
-                {
-                  quote: 'Lightweight, zero dependencies, and multi-provider support. Switching between Gemini, OpenAI, and Claude is seamless.',
-                  name: 'Aman Singh', role: 'TypeScript Developer', initials: 'AS', color: '#3b82f6',
-                },
-                {
-                  quote: 'The SQLite session storage and structured tracing are incredible. Everything you need for production agents.',
-                  name: 'Sujal Rai', role: 'Software Engineer', initials: 'SR', color: '#6366f1',
-                },
-                {
-                  quote: 'Clean API design and beautiful developer experience. Vulcan sets a new standard for TypeScript AI frameworks.',
-                  name: 'Anushka', role: 'UI/UX & Frontend Engineer', initials: 'AN', color: '#a855f7',
-                },
-              ]
+          <div className="horizontal-scroll-hide-scrollbar" style={{ width: '100%', overflowX: 'auto' }}>
+            <div className="animate-marquee" style={{ gap: '20px', paddingLeft: '20px' }}>
+              {(() => {
+                const testimonialsList = [
+                  {
+                    quote: 'Vulcan makes building AI agents clean and accessible for every TypeScript developer. Zero bloat, pure logic.',
+                    name: 'Hitesh Choudhary', role: 'Tech Educator & Founder', initials: 'HC', color: '#0070f3',
+                  },
+                  {
+                    quote: 'Type-safe tool calls with Zod validation out of the box is brilliant. No extra framework overhead, just solid code.',
+                    name: 'Piyush Garg', role: 'Full Stack & AI Engineer', initials: 'PG', color: '#8b5cf6',
+                  },
+                  {
+                    quote: 'The built-in web search and code sandbox tools saved our team hours of setup. Super fast and easy to use.',
+                    name: 'Peeyush', role: 'Full Stack Developer', initials: 'P', color: '#06b6d4',
+                  },
+                  {
+                    quote: 'Human-in-the-loop approvals and guardrails give us peace of mind when running AI workflows in production.',
+                    name: 'Ayush', role: 'AI Engineer', initials: 'A', color: '#10b981',
+                  },
+                  {
+                    quote: 'The event streaming API makes building interactive agent UIs so smooth. Truly developer-first!',
+                    name: 'Vaishnavi', role: 'Frontend Specialist', initials: 'V', color: '#ec4899',
+                  },
+                  {
+                    quote: 'Agent handoffs and cycle detection prevent infinite loops automatically. Essential for multi-agent apps.',
+                    name: 'Dipak Kumar', role: 'Backend & Systems Dev', initials: 'DK', color: '#f59e0b',
+                  },
+                  {
+                    quote: 'Lightweight, zero dependencies, and multi-provider support. Switching between Gemini, OpenAI, and Claude is seamless.',
+                    name: 'Aman Singh', role: 'TypeScript Developer', initials: 'AS', color: '#3b82f6',
+                  },
+                  {
+                    quote: 'The SQLite session storage and structured tracing are incredible. Everything you need for production agents.',
+                    name: 'Sujal Rai', role: 'Software Engineer', initials: 'SR', color: '#6366f1',
+                  },
+                  {
+                    quote: 'Clean API design and beautiful developer experience. Vulcan sets a new standard for TypeScript AI frameworks.',
+                    name: 'Anushka', role: 'UI/UX & Frontend Engineer', initials: 'AN', color: '#a855f7',
+                  },
+                ]
 
-              // Double the array for continuous seamless infinite loop
-              return [...testimonialsList, ...testimonialsList].map((t, idx) => (
-                <div
-                  key={`${t.name}-${idx}`}
-                  style={{
-                    width: '340px',
-                    flexShrink: 0,
-                    border: `1px solid ${isDark ? '#1f1f1f' : '#e5e5e5'}`,
-                    borderRadius: '12px',
-                    padding: '24px',
-                    background: isDark ? '#0c0c0c' : '#ffffff',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justify: 'space-between',
-                    gap: '18px',
-                    boxShadow: isDark ? '0 10px 30px rgba(0,0,0,0.5)' : '0 10px 30px rgba(0,0,0,0.04)',
-                    transition: 'border-color 0.2s, transform 0.2s',
-                    cursor: 'default',
-                  }}
-                  onMouseEnter={e => {
-                    e.currentTarget.style.borderColor = t.color
-                    e.currentTarget.style.transform = 'translateY(-3px)'
-                  }}
-                  onMouseLeave={e => {
-                    e.currentTarget.style.borderColor = isDark ? '#1f1f1f' : '#e5e5e5'
-                    e.currentTarget.style.transform = 'translateY(0)'
-                  }}
-                >
-                  {/* Stars */}
-                  <div style={{ display: 'flex', gap: '4px' }}>
-                    {[...Array(5)].map((_, i) => (
-                      <span key={i} style={{ color: '#fbbf24', fontSize: '13px' }}>★</span>
-                    ))}
-                  </div>
-
-                  {/* Quote */}
-                  <p style={{
-                    fontSize: '13.5px',
-                    lineHeight: '1.65',
-                    color: isDark ? '#cccccc' : '#444444',
-                    margin: 0,
-                    flex: 1,
-                    fontStyle: 'normal',
-                  }}>
-                    "{t.quote}"
-                  </p>
-
-                  {/* Author */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', borderTop: `1px solid ${isDark ? '#1a1a1a' : '#f0f0f0'}`, paddingTop: '14px' }}>
-                    <div style={{
-                      width: 38, height: 38, borderRadius: '50%',
-                      background: `${t.color}1e`, border: `1px solid ${t.color}55`,
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: '12px', fontWeight: 700, color: t.color, fontFamily: 'var(--font-mono)',
+                // Double the array for continuous seamless infinite loop
+                return [...testimonialsList, ...testimonialsList].map((t, idx) => (
+                  <div
+                    key={`${t.name}-${idx}`}
+                    style={{
+                      width: '340px',
                       flexShrink: 0,
-                    }}>{t.initials}</div>
-                    <div>
-                      <div style={{ fontSize: '13.5px', fontWeight: 650, color: s.textPrimary, letterSpacing: '-0.2px' }}>{t.name}</div>
-                      <div style={{ fontSize: '11px', color: s.textSecondary, marginTop: '1px' }}>{t.role}</div>
+                      border: `1px solid ${isDark ? '#1f1f1f' : '#e5e5e5'}`,
+                      borderRadius: '12px',
+                      padding: '24px',
+                      background: isDark ? '#0c0c0c' : '#ffffff',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justify: 'space-between',
+                      gap: '18px',
+                      boxShadow: isDark ? '0 10px 30px rgba(0,0,0,0.5)' : '0 10px 30px rgba(0,0,0,0.04)',
+                      transition: 'border-color 0.2s, transform 0.2s',
+                      cursor: 'default',
+                    }}
+                    onMouseEnter={e => {
+                      e.currentTarget.style.borderColor = t.color
+                      e.currentTarget.style.transform = 'translateY(-3px)'
+                    }}
+                    onMouseLeave={e => {
+                      e.currentTarget.style.borderColor = isDark ? '#1f1f1f' : '#e5e5e5'
+                      e.currentTarget.style.transform = 'translateY(0)'
+                    }}
+                  >
+                    {/* Stars */}
+                    <div style={{ display: 'flex', gap: '4px' }}>
+                      {[...Array(5)].map((_, i) => (
+                        <span key={i} style={{ color: '#fbbf24', fontSize: '13px' }}>★</span>
+                      ))}
+                    </div>
+
+                    {/* Quote */}
+                    <p style={{
+                      fontSize: '13.5px',
+                      lineHeight: '1.65',
+                      color: isDark ? '#cccccc' : '#444444',
+                      margin: 0,
+                      flex: 1,
+                      fontStyle: 'normal',
+                    }}>
+                      "{t.quote}"
+                    </p>
+
+                    {/* Author */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', borderTop: `1px solid ${isDark ? '#1a1a1a' : '#f0f0f0'}`, paddingTop: '14px' }}>
+                      <div style={{
+                        width: 38, height: 38, borderRadius: '50%',
+                        background: `${t.color}1e`, border: `1px solid ${t.color}55`,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontSize: '12px', fontWeight: 700, color: t.color, fontFamily: 'var(--font-mono)',
+                        flexShrink: 0,
+                      }}>{t.initials}</div>
+                      <div>
+                        <div style={{ fontSize: '13.5px', fontWeight: 650, color: s.textPrimary, letterSpacing: '-0.2px' }}>{t.name}</div>
+                        <div style={{ fontSize: '11px', color: s.textSecondary, marginTop: '1px' }}>{t.role}</div>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))
-            })()}
+                ))
+              })()}
+            </div>
           </div>
         </div>
       </section>
@@ -1266,15 +1292,7 @@ const { output } = await Vulcan.run(
             </button>
           </div>
 
-          {/* Verifiable stats only */}
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '32px', marginTop: '8px', justifyContent: 'center' }}>
-            {[['MIT', 'License'], ['v1.0', 'Stable'], ['< 50kb', 'Gzipped'], ['3', 'LLM Providers']].map(([val, label]) => (
-              <div key={label} style={{ textAlign: 'center' }}>
-                <div style={{ fontSize: '20px', fontWeight: 700, fontFamily: 'var(--font-mono)', color: '#fff' }}>{val}</div>
-                <div style={{ fontSize: '11px', color: '#555', fontFamily: 'var(--font-mono)', letterSpacing: '0.06em', marginTop: '3px' }}>{label}</div>
-              </div>
-            ))}
-          </div>
+
         </div>
       </section>
 
