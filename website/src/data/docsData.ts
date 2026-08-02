@@ -861,11 +861,11 @@ const multiModelAgent = Vulcan.createAgent({
     id: 'examples',
     title: 'Examples & Recipes',
     category: 'Reference',
-    description: 'Production-ready code snippets and end-to-end recipes demonstrating real-world Vulcan SDK usage.',
+    description: 'Production-ready code snippets and end-to-end recipes demonstrating all features of Vulcan SDK.',
     sections: [
       {
-        title: '1. Basic Agent with Custom Tools',
-        content: 'Create a standalone assistant with Zod-validated custom tool functions.',
+        title: '1. Basic Agent with Custom Zod Tools',
+        content: 'Create a standalone assistant with typed Zod-validated tool schemas.',
         code: `import { Vulcan, z } from 'vulcan-agentic-sdk'
 
 const calculator = Vulcan.createTool({
@@ -947,6 +947,102 @@ const result = await Vulcan.run<z.infer<typeof UserProfileSchema>>(
 console.log(result.output.username) // Typed object!`,
         codeLanguage: 'typescript',
         codeFilename: 'guardrails-example.ts',
+      },
+      {
+        title: '4. Human-in-the-Loop (HITL) Approvals',
+        content: 'Require explicit human operator approval before executing sensitive financial or database tool calls.',
+        code: `import { Vulcan, z } from 'vulcan-agentic-sdk'
+
+const wireTransferTool = Vulcan.createTool({
+  name: 'send_wire_transfer',
+  description: 'Transfer funds to external bank account',
+  inputSchema: z.object({ amount: z.number(), recipientAccount: z.string() }),
+  requiresApproval: (input) => input.amount > 100, // Require approval for transfers > $100
+  async execute({ amount, recipientAccount }) {
+    return { success: true, message: \`Transferred $\${amount} to \${recipientAccount}\` }
+  },
+})
+
+const agent = Vulcan.createAgent({
+  name: 'banking-agent',
+  instructions: 'You assist users with financial transactions.',
+  tools: [wireTransferTool],
+})
+
+const result = await Vulcan.run(agent, 'Transfer $500 to account US123456', {
+  async onApproval(request) {
+    console.log('[HITL Request]:', request.toolName, request.input)
+    return { approved: true, reason: 'Approved by compliance officer' }
+  },
+})`,
+        codeLanguage: 'typescript',
+        codeFilename: 'hitl-approvals.ts',
+      },
+      {
+        title: '5. Run Budgets, Tool Self-Healing & Model Fallbacks',
+        content: 'Protect execution with tool limits, duration timeouts, self-healing retries, and multi-model fallbacks.',
+        code: `import { Vulcan } from 'vulcan-agentic-sdk'
+
+const agent = Vulcan.createAgent({
+  name: 'resilient-agent',
+  instructions: 'Fetch remote data reliably',
+  model: 'gpt-4o',
+  fallbackProviders: ['anthropic', 'gemini'],
+  fallbackModels: ['claude-3-5-sonnet', 'gemini-1.5-pro'],
+  maxToolCalls: 5,        // Max 5 tool calls
+  maxDurationMs: 15000,    // Max 15 seconds run duration
+  maxToolErrorRetries: 3, // 3 self-healing tool retries
+})
+
+agent.on('self_healing_retry', (event) => {
+  console.log(\`[Self-Healing] Tool \${event.data.toolName} failed, retrying...\`)
+})
+
+const result = await Vulcan.run(agent, 'Process analytics data')`,
+        codeLanguage: 'typescript',
+        codeFilename: 'budgets-fallbacks.ts',
+      },
+      {
+        title: '6. Real-time Event Streaming & Observability',
+        content: 'Stream reasoning steps, tool calls, and text tokens to frontend clients in real time.',
+        code: `import { Vulcan } from 'vulcan-agentic-sdk'
+
+const agent = Vulcan.createAgent({
+  name: 'streaming-agent',
+  instructions: 'Answer user queries with reasoning.',
+})
+
+for await (const event of Vulcan.stream(agent, 'Explain quantum computing')) {
+  if (event.type === 'model_called') {
+    console.log('[Model Response]:', event.data)
+  } else if (event.type === 'tool_started') {
+    console.log('[Tool Execution]:', event.data.name)
+  }
+}`,
+        codeLanguage: 'typescript',
+        codeFilename: 'streaming-events.ts',
+      },
+      {
+        title: '7. Persistent Session Memory & SQLite Storage',
+        content: 'Persist chat history across application restarts using SQLite or custom storage adapters.',
+        code: `import { Vulcan, SQLiteStorage } from 'vulcan-agentic-sdk'
+
+const storage = new SQLiteStorage('./agent-memory.db')
+
+const agent = Vulcan.createAgent({
+  name: 'persistent-agent',
+  instructions: 'Remember user details across multi-turn sessions.',
+  storageAdapter: storage,
+})
+
+// Turn 1
+await Vulcan.run(agent, 'My favorite color is teal', { sessionId: 'user_101' })
+
+// Turn 2 (Session remembered!)
+const res = await Vulcan.run(agent, 'What is my favorite color?', { sessionId: 'user_101' })
+console.log(res.output) // "Your favorite color is teal"`,
+        codeLanguage: 'typescript',
+        codeFilename: 'memory-sqlite.ts',
       },
     ],
   },
