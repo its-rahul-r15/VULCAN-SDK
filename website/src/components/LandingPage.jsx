@@ -1424,11 +1424,6 @@ export function LandingPage({ onViewChange, theme }) {
             fontSize: '12px',
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <div style={{
-                width: 14, height: 14,
-                clipPath: 'polygon(50% 0%, 0% 100%, 100% 100%)',
-                background: isDark ? '#fff' : '#111',
-              }} />
               <span style={{ color: isDark ? '#555' : '#aaa' }}>© 2026 Vulcan SDK. Open source under MIT License.</span>
             </div>
             <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>

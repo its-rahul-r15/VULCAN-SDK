@@ -1,3 +1,11 @@
+/**
+ * Vulcan Agentic SDK
+ * Production-grade, zero-dependency AI Agent framework for TypeScript.
+ * Features: Type-safe tools (Zod), cycle-blocked multi-agent handoffs, guardrails, and structured tracing.
+ * npm Package: https://www.npmjs.com/package/vulcan-agentic-sdk
+ * Documentation: https://vulcan-sdk.itsrahulr15.online/
+ */
+
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'

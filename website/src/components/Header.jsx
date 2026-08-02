@@ -76,12 +76,11 @@ export function Header({ currentView, onViewChange, theme, onToggleTheme }) {
           <div className="flex items-center gap-6 md:gap-8">
             <button
               onClick={() => { onViewChange('landing'); setMobileMenuOpen(false) }}
-              className="flex items-center gap-2.5 font-semibold tracking-tight transition hover:opacity-80"
+              className="flex items-center gap-2 font-semibold tracking-tight transition hover:opacity-80"
               aria-label="Vulcan SDK home page"
             >
-              <div className={`h-5 w-5 flex items-center justify-center [clip-path:polygon(50%_0%,_0%_100%,_100%_100%)] ${isDark ? 'bg-white' : 'bg-[#171717]'}`} />
               <span className={`text-base font-semibold tracking-tight ${isDark ? 'text-white' : 'text-[#171717]'}`}>
-                Vulcan
+                Vulcan SDK
               </span>
             </button>
 
