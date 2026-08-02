@@ -153,6 +153,38 @@ export class Agent {
     return this
   }
 
+  /**
+   * Set fallback models (tried in order on primary model failure).
+   */
+  withFallbackModels(...models: string[]): this {
+    this.config.fallbackModels = models
+    return this
+  }
+
+  /**
+   * Set maximum tool calls allowed for a single run.
+   */
+  withMaxToolCalls(maxToolCalls: number): this {
+    this.config.maxToolCalls = maxToolCalls
+    return this
+  }
+
+  /**
+   * Set maximum wall-clock duration allowed for a single run in milliseconds.
+   */
+  withMaxDuration(maxDurationMs: number): this {
+    this.config.maxDurationMs = maxDurationMs
+    return this
+  }
+
+  /**
+   * Set maximum accumulated tokens allowed for a run.
+   */
+  withMaxTokens(maxTotalTokens: number): this {
+    this.config.maxTotalTokens = maxTotalTokens
+    return this
+  }
+
   // ─────────────────────────────────────────────
   // Convenience Run Methods
   // ─────────────────────────────────────────────

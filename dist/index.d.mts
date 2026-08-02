@@ -75,7 +75,7 @@ interface ApprovalResult {
     modifiedInput?: unknown;
 }
 type ApprovalHandler = (request: ApprovalRequest) => Promise<ApprovalResult | boolean> | ApprovalResult | boolean;
-type RunStatus = 'running' | 'completed' | 'failed' | 'max_turns_reached' | 'handoff' | 'guardrail_blocked' | 'requires_approval';
+type RunStatus = 'running' | 'completed' | 'failed' | 'max_turns_reached' | 'handoff' | 'guardrail_blocked' | 'requires_approval' | 'budget_exceeded';
 interface RunResult<T = string> {
     output: T;
     rawOutput: string;
@@ -98,8 +98,18 @@ interface RunOptions {
     provider?: string;
     /** Human-in-the-Loop approval callback for sensitive tool calls */
     onApproval?: ApprovalHandler;
+    /** Max tool calls allowed per run */
+    maxToolCalls?: number;
+    /** Max wall-clock execution time in milliseconds for the run */
+    maxDurationMs?: number;
+    /** Max total accumulated tokens allowed for the run */
+    maxTotalTokens?: number;
+    /** Max retries allowed when a tool execution fails */
+    maxToolErrorRetries?: number;
+    /** Backup model identifiers tried in order if primary fails */
+    fallbackModels?: string[];
 }
-type VulcanEventType = 'text_streamed' | 'tool_started' | 'tool_completed' | 'tool_error' | 'approval_requested' | 'approval_granted' | 'approval_rejected' | 'handoff_started' | 'handoff_completed' | 'guardrail_triggered' | 'guardrail_passed' | 'harness_step' | 'model_called' | 'retry' | 'run_started' | 'run_completed' | 'run_failed';
+type VulcanEventType = 'text_streamed' | 'tool_started' | 'tool_completed' | 'tool_error' | 'approval_requested' | 'approval_granted' | 'approval_rejected' | 'handoff_started' | 'handoff_completed' | 'guardrail_triggered' | 'guardrail_passed' | 'harness_step' | 'model_called' | 'retry' | 'run_started' | 'run_completed' | 'run_failed' | 'budget_exceeded' | 'self_healing_retry';
 interface VulcanEvent {
     type: VulcanEventType;
     timestamp: number;
@@ -228,6 +238,8 @@ interface AgentConfig {
     providerName?: string;
     /** Fallback provider names (tried in order on error) */
     fallbackProviders?: string[];
+    /** Fallback model identifiers (tried in order on error) */
+    fallbackModels?: string[];
     /** Tools available to this agent */
     tools?: ToolDefinition[];
     /** Agents this agent can hand off to */
@@ -238,6 +250,14 @@ interface AgentConfig {
     outputSchema?: ZodSchema;
     /** Max turns before stopping (default: 20) */
     maxTurns?: number;
+    /** Max tool calls allowed per run */
+    maxToolCalls?: number;
+    /** Max duration in milliseconds allowed for a run */
+    maxDurationMs?: number;
+    /** Max accumulated tokens allowed for a run */
+    maxTotalTokens?: number;
+    /** Max retries allowed when a tool fails before giving up */
+    maxToolErrorRetries?: number;
     /** Max retries on provider failure (default: 3) */
     maxRetries?: number;
     /** Storage adapter for session memory */
@@ -307,6 +327,22 @@ declare class Agent {
      * Set temperature.
      */
     withTemperature(temperature: number): this;
+    /**
+     * Set fallback models (tried in order on primary model failure).
+     */
+    withFallbackModels(...models: string[]): this;
+    /**
+     * Set maximum tool calls allowed for a single run.
+     */
+    withMaxToolCalls(maxToolCalls: number): this;
+    /**
+     * Set maximum wall-clock duration allowed for a single run in milliseconds.
+     */
+    withMaxDuration(maxDurationMs: number): this;
+    /**
+     * Set maximum accumulated tokens allowed for a run.
+     */
+    withMaxTokens(maxTotalTokens: number): this;
     /**
      * Run the agent with a user input string.
      * Shorthand for: new AgentRunner().run(agent, input, options)
@@ -386,6 +422,7 @@ declare class AgentRunner {
     private _runHarnessLoop;
     private _callWithRetry;
     private _executeToolCall;
+    private _checkBudgets;
     private _validateStructuredOutput;
     private _buildSystemPrompt;
     private _buildHandoffTools;
@@ -399,6 +436,19 @@ declare class HandoffLoopError extends Error {
 declare class StructuredOutputValidationError extends Error {
     readonly validationErrors: string;
     constructor(validationErrors: string);
+}
+declare class BudgetExceededError extends Error {
+    readonly budgetType: string;
+    constructor(budgetType: string, message: string);
+}
+declare class ToolCallBudgetExceededError extends BudgetExceededError {
+    constructor(current: number, max: number);
+}
+declare class TimeoutBudgetExceededError extends BudgetExceededError {
+    constructor(elapsedMs: number, maxMs: number);
+}
+declare class TokenBudgetExceededError extends BudgetExceededError {
+    constructor(totalTokens: number, maxTokens: number);
 }
 
 declare class RunContext implements RunContextLite {
@@ -420,6 +470,12 @@ declare class RunContext implements RunContextLite {
     agentConfig: AgentConfig;
     /** Track visited agents to detect handoff loops */
     visitedAgents: Set<string>;
+    /** Total tool executions in this run */
+    totalToolCalls: number;
+    /** Wall-clock start time of the run */
+    startTime: number;
+    /** Track error retries per tool name */
+    toolErrorCounts: Map<string, number>;
     constructor(options: RunContextOptions);
     /**
      * Add a message to the current run's context.
@@ -1024,4 +1080,4 @@ declare const Vulcan: {
     stream(agent: Agent, input: string, options?: RunOptions): AsyncGenerator<VulcanEvent, void, any>;
 };
 
-export { Agent, type AgentConfig, AgentConfigError, AgentRunner, AnthropicProvider, type AnthropicToolSchema, type ApprovalHandler, type ApprovalRequest, ApprovalRequiredSignal, type ApprovalResult, BaseProvider, BlockedToolsGuardrail, type CodeSandboxOptions, type FinishReason, FunctionGuardrail, type GeminiFunctionSchema, GeminiProvider, GroqProvider, type Guardrail, GuardrailBlockedError, type GuardrailPayload, type GuardrailResult, type GuardrailType, HandoffLoopError, type HandoffRecord, type HarnessMessage, HarnessParseError, type HarnessStep, InMemoryStorage, KeywordBlockGuardrail, MaxLengthGuardrail, type Message, type MessageRole, type ModelCallRecord, type ModelProvider, type ModelResponse, type OpenAIFunctionSchema, OpenAIProvider, PIIScrubberGuardrail, type ProviderCallConfig, ProviderError, ProviderNotFoundError, type ReasoningMode, RunContext, type RunContextLite, type RunOptions, type RunResult, type RunStatus, type SQLQueryOptions, SQLiteStorage, SQLiteStorageError, type Session, SessionManager, type StorageAdapter, type StreamChunk, StructuredOutputGuardrail, StructuredOutputValidationError, type TokenUsage, Tool, type ToolCall, type ToolCallRecord, type ToolDefinition, ToolExecutionError, type ToolResult, ToolTimeoutError, ToolValidationError, type Trace, VULCAN_HARNESS_PROMPT, type VectorSearchResult, type VectorStoreOptions, Vulcan, type VulcanEvent, type VulcanEventType, VulcanHarness, VulcanTracer, type WebScraperOptions, type WebSearchOptions, type WebSearchResult, createApprovalRequest, createCodeSandboxTool, createSQLQueryTool, createSession, createVectorStoreTool, createWebScraperTool, createWebSearchTool, globalTracer, groqProvider, parseApprovalResult, providerRegistry, runGuardrails, updateSession, vulcanHarness, zodToJsonSchema };
+export { Agent, type AgentConfig, AgentConfigError, AgentRunner, AnthropicProvider, type AnthropicToolSchema, type ApprovalHandler, type ApprovalRequest, ApprovalRequiredSignal, type ApprovalResult, BaseProvider, BlockedToolsGuardrail, BudgetExceededError, type CodeSandboxOptions, type FinishReason, FunctionGuardrail, type GeminiFunctionSchema, GeminiProvider, GroqProvider, type Guardrail, GuardrailBlockedError, type GuardrailPayload, type GuardrailResult, type GuardrailType, HandoffLoopError, type HandoffRecord, type HarnessMessage, HarnessParseError, type HarnessStep, InMemoryStorage, KeywordBlockGuardrail, MaxLengthGuardrail, type Message, type MessageRole, type ModelCallRecord, type ModelProvider, type ModelResponse, type OpenAIFunctionSchema, OpenAIProvider, PIIScrubberGuardrail, type ProviderCallConfig, ProviderError, ProviderNotFoundError, type ReasoningMode, RunContext, type RunContextLite, type RunOptions, type RunResult, type RunStatus, type SQLQueryOptions, SQLiteStorage, SQLiteStorageError, type Session, SessionManager, type StorageAdapter, type StreamChunk, StructuredOutputGuardrail, StructuredOutputValidationError, TimeoutBudgetExceededError, TokenBudgetExceededError, type TokenUsage, Tool, type ToolCall, ToolCallBudgetExceededError, type ToolCallRecord, type ToolDefinition, ToolExecutionError, type ToolResult, ToolTimeoutError, ToolValidationError, type Trace, VULCAN_HARNESS_PROMPT, type VectorSearchResult, type VectorStoreOptions, Vulcan, type VulcanEvent, type VulcanEventType, VulcanHarness, VulcanTracer, type WebScraperOptions, type WebSearchOptions, type WebSearchResult, createApprovalRequest, createCodeSandboxTool, createSQLQueryTool, createSession, createVectorStoreTool, createWebScraperTool, createWebSearchTool, globalTracer, groqProvider, parseApprovalResult, providerRegistry, runGuardrails, updateSession, vulcanHarness, zodToJsonSchema };

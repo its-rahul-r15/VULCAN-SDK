@@ -22,6 +22,7 @@ const SIDEBAR_ITEMS = [
   {
     category: 'Advanced & Production',
     pages: [
+      { id: 'budgets-reliability', title: 'Budgets & Self-Healing' },
       { id: 'hitlApprovals', title: 'Human-in-the-Loop (HITL)' },
       { id: 'handoffs', title: 'Agent Handoffs' },
       { id: 'tracing', title: 'Tracing & Observability' },
@@ -148,42 +149,48 @@ function highlightCodeLine(line, language) {
   }
 
   let html = escapeHtml(line)
+  const tokens = []
+
+  function addToken(match, style) {
+    const id = `___TOK_${tokens.length}___`
+    tokens.push({ id, html: `<span style="${style}">${match}</span>` })
+    return id
+  }
 
   // 1. Inline comments (must run first so later passes don't colorize inside them)
-  html = html.replace(/(\/\/.+)$/, '<span style="color:#4a4a4a;font-style:italic">$1</span>')
+  html = html.replace(/(\/\/.+)$/, (_, m) => addToken(m, 'color:#4a4a4a;font-style:italic'))
 
-  // 2. Template literals first (before regular strings)
-  html = html.replace(/(`[^`]*`)/g, '<span style="color:#9ecbff">$1</span>')
+  // 2. Template literals & Strings
+  html = html.replace(/(`[^`]*`|'[^']*'|"[^"]*")/g, (m) => addToken(m, 'color:#9ecbff'))
 
-  // 3. Regular strings
-  html = html.replace(/('[^']*'|"[^"]*")/g, '<span style="color:#9ecbff">$1</span>')
-
-  // 4. Keywords
+  // 3. Keywords
   html = html.replace(
     /\b(import|from|export|const|let|var|await|async|return|new|function|class|if|else|try|catch|for|of|in|type|interface|default|typeof|implements|extends)\b/g,
-    '<span style="color:#79b8ff;font-weight:500">$1</span>'
+    (m) => addToken(m, 'color:#79b8ff;font-weight:500')
   )
 
-  // 5. Vulcan / SDK core classes
+  // 4. Vulcan / SDK core classes
   html = html.replace(
     /\b(Vulcan|Tool|Agent|AgentRunner|RunContext|PIIScrubberGuardrail|MaxLengthGuardrail|KeywordBlockGuardrail|FunctionGuardrail|BlockedToolsGuardrail|SQLiteStorage|InMemoryStorage|RedisStorage|globalTracer|SessionStorage|Message)\b/g,
-    '<span style="color:#ffab70;font-weight:600">$1</span>'
+    (m) => addToken(m, 'color:#ffab70;font-weight:600')
   )
 
-  // 6. SDK methods / Zod helpers (only before parens or colons — avoids false positives)
+  // 5. SDK methods / Zod helpers
   html = html.replace(
     /\b(createAgent|createTool|run|stream|generateStructured|createWebSearchTool|createWebScraperTool|createCodeSandboxTool|createSQLQueryTool|createVectorStoreTool|execute|errorHandler|onApproval|withHandoff|getTrace|export|getMessages|appendMessages|clearSession|z|object|string|number|boolean|enum|array|url|min|max|optional|describe|default)\b(?=\s*[\(:])/g,
-    '<span style="color:#b39ddb">$1</span>'
+    (m) => addToken(m, 'color:#b39ddb')
   )
 
-  // 7. Booleans & special values
+  // 6. Booleans & special values
   html = html.replace(
     /\b(true|false|null|undefined)\b/g,
-    '<span style="color:#50e3c2;font-weight:600">$1</span>'
+    (m) => addToken(m, 'color:#50e3c2;font-weight:600')
   )
 
-  // NOTE: No blanket number highlighting — it caused `500`, `8000` etc. inside
-  // method args to appear as bright yellow, which was distracting and misleading.
+  // Restore tokens in reverse order or exact order
+  for (const t of tokens) {
+    html = html.replace(t.id, t.html)
+  }
 
   return html
 }

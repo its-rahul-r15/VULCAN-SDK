@@ -36,6 +36,12 @@ export class RunContext implements RunContextLite {
   agentConfig: AgentConfig
   /** Track visited agents to detect handoff loops */
   visitedAgents: Set<string>
+  /** Total tool executions in this run */
+  totalToolCalls: number
+  /** Wall-clock start time of the run */
+  startTime: number
+  /** Track error retries per tool name */
+  toolErrorCounts: Map<string, number>
 
   constructor(options: RunContextOptions) {
     this.runId = uuidv4()
@@ -50,6 +56,9 @@ export class RunContext implements RunContextLite {
     this.metadata = options.metadata ?? {}
     this.agentConfig = options.agentConfig
     this.visitedAgents = new Set([options.agentConfig.name])
+    this.totalToolCalls = 0
+    this.startTime = Date.now()
+    this.toolErrorCounts = new Map()
   }
 
   /**

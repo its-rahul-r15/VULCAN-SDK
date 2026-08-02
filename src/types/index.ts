@@ -138,6 +138,7 @@ export type RunStatus =
   | 'handoff'
   | 'guardrail_blocked'
   | 'requires_approval'
+  | 'budget_exceeded'
 
 export interface RunResult<T = string> {
   output: T
@@ -162,6 +163,16 @@ export interface RunOptions {
   provider?: string
   /** Human-in-the-Loop approval callback for sensitive tool calls */
   onApproval?: ApprovalHandler
+  /** Max tool calls allowed per run */
+  maxToolCalls?: number
+  /** Max wall-clock execution time in milliseconds for the run */
+  maxDurationMs?: number
+  /** Max total accumulated tokens allowed for the run */
+  maxTotalTokens?: number
+  /** Max retries allowed when a tool execution fails */
+  maxToolErrorRetries?: number
+  /** Backup model identifiers tried in order if primary fails */
+  fallbackModels?: string[]
 }
 
 // ─────────────────────────────────────────────
@@ -186,6 +197,8 @@ export type VulcanEventType =
   | 'run_started'
   | 'run_completed'
   | 'run_failed'
+  | 'budget_exceeded'
+  | 'self_healing_retry'
 
 export interface VulcanEvent {
   type: VulcanEventType
@@ -354,6 +367,8 @@ export interface AgentConfig {
   providerName?: string
   /** Fallback provider names (tried in order on error) */
   fallbackProviders?: string[]
+  /** Fallback model identifiers (tried in order on error) */
+  fallbackModels?: string[]
   /** Tools available to this agent */
   tools?: ToolDefinition[]
   /** Agents this agent can hand off to */
@@ -364,6 +379,14 @@ export interface AgentConfig {
   outputSchema?: ZodSchema
   /** Max turns before stopping (default: 20) */
   maxTurns?: number
+  /** Max tool calls allowed per run */
+  maxToolCalls?: number
+  /** Max duration in milliseconds allowed for a run */
+  maxDurationMs?: number
+  /** Max accumulated tokens allowed for a run */
+  maxTotalTokens?: number
+  /** Max retries allowed when a tool fails before giving up */
+  maxToolErrorRetries?: number
   /** Max retries on provider failure (default: 3) */
   maxRetries?: number
   /** Storage adapter for session memory */

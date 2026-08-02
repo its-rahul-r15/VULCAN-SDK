@@ -779,4 +779,81 @@ if (result.status === 'requires_approval') {
       },
     ],
   },
+
+  'budgets-reliability': {
+    id: 'budgets-reliability',
+    title: 'Budgets & Self-Healing',
+    category: 'Advanced & Production',
+    description: 'Enforce execution limits (max tool calls, wall-clock duration timeouts, token budgets), auto-correct tool errors with self-healing retries, and configure multi-provider fallback chains.',
+    sections: [
+      {
+        title: '1. Run Budgets & Protections',
+        content: 'Protect your production agents from infinite tool loops, long-running requests, and unexpected token expenses with explicit run budgets.',
+        code: `import { Vulcan } from 'vulcan-agentic-sdk'
+
+// 1. Set budgets in Agent Configuration
+const agent = Vulcan.createAgent({
+  name: 'budget-protected-agent',
+  instructions: 'Perform autonomous research',
+  maxToolCalls: 10,       // Stop after 10 tool calls
+  maxDurationMs: 30000,    // Stop after 30 seconds
+  maxTotalTokens: 50000,   // Stop if total tokens exceed 50k
+})
+
+// 2. Or pass dynamic budgets per run
+const result = await Vulcan.run(agent, 'Analyze financial report', {
+  maxToolCalls: 5,
+  maxDurationMs: 15000,
+})
+
+if (result.status === 'budget_exceeded') {
+  console.warn('Run stopped due to budget limit:', result.error)
+}`,
+        codeLanguage: 'typescript',
+        codeFilename: 'budgets.ts',
+        callout: { type: 'warning', text: 'When a budget is exceeded, the run terminates immediately with status: "budget_exceeded" and exports structured error records in traces.' },
+      },
+      {
+        title: '2. Tool Auto-Correction & Self-Healing',
+        content: 'When a tool execution throws an error (such as malformed parameters or API errors), Vulcan automatically catches the failure and injects a self-healing hint into the LLM context to prompt auto-correction.',
+        code: `import { Vulcan } from 'vulcan-agentic-sdk'
+
+const agent = Vulcan.createAgent({
+  name: 'self-healing-agent',
+  instructions: '...',
+  maxToolErrorRetries: 3, // Auto-retry failed tools up to 3 times
+})
+
+// Listen to self-healing events
+agent.on('self_healing_retry', (event) => {
+  console.log(\`[Self-Healing] Tool '\${event.data.toolName}' failed: \${event.data.error}\`)
+  console.log(\`Attempt \${event.data.retryCount} of \${event.data.maxRetries}\`)
+})`,
+        codeLanguage: 'typescript',
+        codeFilename: 'self-healing.ts',
+      },
+      {
+        title: '3. Multi-Provider & Model Fallbacks',
+        content: 'Configure fallback providers and alternative models to guarantee continuous uptime even during primary API outages or rate limits.',
+        code: `// Multi-Provider Fallbacks
+const agent = Vulcan.createAgent({
+  name: 'resilient-agent',
+  instructions: '...',
+  model: 'gpt-4o',
+  providerName: 'openai',
+  fallbackProviders: ['anthropic', 'gemini'],
+})
+
+// Multi-Model Fallbacks (Fluent builder API)
+const multiModelAgent = Vulcan.createAgent({
+  name: 'multi-model-agent',
+  instructions: '...',
+  model: 'gpt-4o',
+}).withFallbackModels('claude-3-5-sonnet', 'gemini-1.5-pro')`,
+        codeLanguage: 'typescript',
+        codeFilename: 'fallbacks.ts',
+        callout: { type: 'tip', text: 'If the primary model API fails with 429 rate limit or 503 service outage, execution automatically switches to the next fallback candidate without losing conversation state.' },
+      },
+    ],
+  },
 }

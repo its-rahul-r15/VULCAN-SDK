@@ -24,9 +24,10 @@ Build agents that:
 - 🔧 **Call tools** with Zod-validated inputs and typed outputs
 - 🔄 **Hand off** between specialized agents with loop detection
 - 🛡️ **Stay safe** with input, output, and tool-level guardrails
+- ⚡ **Enforce Budgets & Self-Healing** with max tool calls, duration limits, and LLM tool auto-correction retries
 - 💾 **Remember** conversations across sessions with pluggable storage
 - 📊 **Observe everything** with full traces, token usage, and event streams
-- 🌐 **Work with any LLM** — OpenAI, Claude, Gemini, or your own provider
+- 🌐 **Work with any LLM** — OpenAI, Claude, Gemini, Groq, or fallback models
 
 ---
 
@@ -35,7 +36,9 @@ Build agents that:
 | Feature | Vulcan | LangChain | OpenAI Agents SDK |
 |---------|--------|-----------|-------------------|
 | Zero framework dependency | ✅ | ❌ | ❌ |
-| Multi-provider support | ✅ | ✅ | ❌ |
+| Multi-provider & Model Fallbacks | ✅ | ✅ | ❌ |
+| Run Budgets & Protection | ✅ | ❌ | ❌ |
+| Tool Error Auto-Correction | ✅ | ❌ | ❌ |
 | Built-in CoT reasoning | ✅ | ❌ | ❌ |
 | Zod typed tool inputs | ✅ | Partial | ❌ |
 | Tool-level guardrails | ✅ | ❌ | ❌ |

@@ -12,7 +12,15 @@ dotenv.config()
 // Core
 // ─────────────────────────────────────────────
 export { Agent, AgentConfigError } from './core/agent.js'
-export { AgentRunner, HandoffLoopError, StructuredOutputValidationError } from './core/runner.js'
+export {
+  AgentRunner,
+  HandoffLoopError,
+  StructuredOutputValidationError,
+  BudgetExceededError,
+  ToolCallBudgetExceededError,
+  TimeoutBudgetExceededError,
+  TokenBudgetExceededError,
+} from './core/runner.js'
 export { RunContext } from './core/context.js'
 export { VulcanHarness, vulcanHarness, VULCAN_HARNESS_PROMPT, HarnessParseError } from './core/harness.js'
 export { ApprovalRequiredSignal, createApprovalRequest, parseApprovalResult } from './core/hitl.js'

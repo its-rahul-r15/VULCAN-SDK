@@ -52,20 +52,30 @@ const agent = Vulcan.createAgent({
 })
 ```
 
-## Model Fallback
+## Model & Provider Fallbacks
 
-Automatically fall back to alternative providers on failure:
+Automatically fall back to alternative providers or model identifiers on failure:
 
 ```typescript
+// Provider Fallbacks
 const agent = Vulcan.createAgent({
   name: 'resilient-agent',
   instructions: '...',
+  model: 'gpt-4o',
   providerName: 'openai',
   fallbackProviders: ['anthropic', 'gemini'],
 })
+
+// Model Fallbacks (using fluent builder)
+const resilientAgent = Vulcan.createAgent({
+  name: 'smart-agent',
+  instructions: '...',
+  model: 'gpt-4o',
+})
+.withFallbackModels('claude-3-5-sonnet', 'gemini-1.5-pro')
 ```
 
-The runner tries providers in order, with exponential backoff retry (3 attempts) on rate limits (429) and server errors (503).
+The runner tries providers and fallback models in order, with exponential backoff retry on rate limits (429) and server errors (503). If the primary provider or model fails, execution automatically transitions to the next fallback candidate.
 
 ## Custom Provider
 

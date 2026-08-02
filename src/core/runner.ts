@@ -119,11 +119,6 @@ export class AgentRunner {
       buffer.push(event)
     })
 
-    // Run in background and push events to buffer
-    const runPromise = this.run(agent, input, { ...options })
-
-    // Attach event forwarding to the emitter
-    // We need to re-run with this specific emitter
     const sessionId = options.sessionId ?? uuidv4()
     const storageAdapter = agent.config.storageAdapter ?? new InMemoryStorage()
     const sessionManager = new SessionManager(storageAdapter)
@@ -168,7 +163,6 @@ export class AgentRunner {
     }
 
     await loopPromise
-    void runPromise // suppress unused warning
   }
 
   // ─────────────────────────────────────────────
@@ -226,11 +220,28 @@ export class AgentRunner {
     const allTools = [...(config.tools ?? []), ...handoffTools]
 
     // ── 4. Harness mode vs standard mode ──
-    if (config.reasoningMode === 'harness') {
-      return this._runHarnessLoop<T>(ctx, allTools, options, sessionManager, maxTurns)
+    try {
+      if (config.reasoningMode === 'harness') {
+        return await this._runHarnessLoop<T>(ctx, allTools, options, sessionManager, maxTurns)
+      }
+      return await this._runStandardLoop<T>(ctx, allTools, options, sessionManager, maxTurns)
+    } catch (err) {
+      if (err instanceof BudgetExceededError) {
+        await this._persistSession(ctx, sessionManager, '')
+        return {
+          output: '' as unknown as T,
+          rawOutput: '',
+          status: 'budget_exceeded',
+          sessionId: ctx.sessionId,
+          traceId: ctx.trace.runId,
+          turns: ctx.turn,
+          usage: ctx.trace.totalUsage,
+          agentName: ctx.agentName,
+          error: err.message,
+        }
+      }
+      throw err
     }
-
-    return this._runStandardLoop<T>(ctx, allTools, options, sessionManager, maxTurns)
   }
 
   // ─────────────────────────────────────────────
@@ -249,6 +260,9 @@ export class AgentRunner {
 
     while (ctx.turn < maxTurns) {
       ctx.turn++
+
+      // Check run budgets at start of each turn
+      this._checkBudgets(ctx, options)
 
       // ── Call model ──
       const callStart = Date.now()
@@ -280,6 +294,9 @@ export class AgentRunner {
         finishReason: response.finishReason,
         turn: ctx.turn,
       })
+
+      // Check run budgets after model response
+      this._checkBudgets(ctx, options)
 
       // ── Handle tool calls ──
       if (response.toolCalls.length > 0) {
@@ -584,19 +601,40 @@ export class AgentRunner {
   ): Promise<ModelResponse> {
     const config = ctx.agentConfig
     const maxRetries = config.maxRetries ?? 3
-    const providerName = resolveProviderName(config, options)
-    const fallbacks = config.fallbackProviders ?? []
-    const providerChain = [providerName, ...fallbacks]
+
+    const primaryModel = config.model ?? 'gemini-2.5-flash'
+    const primaryProvider = resolveProviderName(config, options)
+
+    const fallbackModels = options.fallbackModels ?? config.fallbackModels ?? []
+    const fallbackProviders = config.fallbackProviders ?? []
+
+    // Build candidate chain: primary -> fallbackModels -> fallbackProviders
+    const candidateChain: Array<{ provider: string; model: string }> = [
+      { provider: primaryProvider, model: primaryModel },
+    ]
+
+    for (const fModel of fallbackModels) {
+      const fProv = resolveProviderNameByModel(fModel, primaryProvider)
+      if (!candidateChain.some((c) => c.provider === fProv && c.model === fModel)) {
+        candidateChain.push({ provider: fProv, model: fModel })
+      }
+    }
+
+    for (const fProv of fallbackProviders) {
+      if (!candidateChain.some((c) => c.provider === fProv)) {
+        candidateChain.push({ provider: fProv, model: primaryModel })
+      }
+    }
 
     let lastError: Error | undefined
 
-    for (const pName of providerChain) {
-      const provider = providerRegistry.get(pName)
+    for (const candidate of candidateChain) {
+      const provider = providerRegistry.get(candidate.provider)
 
       for (let attempt = 0; attempt <= maxRetries; attempt++) {
         try {
           const response = await provider.chat(messages, tools, {
-            model: config.model ?? 'gemini-2.5-flash',
+            model: candidate.model,
             temperature: options.temperature ?? config.temperature,
             maxTokens: options.maxTokens ?? config.maxTokens,
             responseFormat:
@@ -611,18 +649,31 @@ export class AgentRunner {
 
           if (error instanceof ProviderError && error.retryable && attempt < maxRetries) {
             const delay = Math.pow(2, attempt) * 500
-            ctx.emit('retry', { provider: pName, attempt: attempt + 1, delay, error: err.message })
+            ctx.emit('retry', {
+              provider: candidate.provider,
+              model: candidate.model,
+              attempt: attempt + 1,
+              delay,
+              error: err.message,
+            })
             await sleep(delay)
             continue
           }
 
-          // Non-retryable — try next provider
+          // Non-retryable error or retries exhausted — try next fallback candidate
+          ctx.emit('retry', {
+            provider: candidate.provider,
+            model: candidate.model,
+            attempt: attempt + 1,
+            fallback: true,
+            error: err.message,
+          })
           break
         }
       }
     }
 
-    throw lastError ?? new Error('All providers failed')
+    throw lastError ?? new Error('All providers and fallback models failed')
   }
 
   private async _executeToolCall(
@@ -711,6 +762,9 @@ export class AgentRunner {
       }
     }
 
+    ctx.totalToolCalls++
+    this._checkBudgets(ctx, options ?? {})
+
     ctx.emit('tool_started', { name: toolCall.name, input: finalInput, id: toolCall.id })
     const toolStart = Date.now()
 
@@ -731,8 +785,58 @@ export class AgentRunner {
       const err = error instanceof Error ? error : new Error(String(error))
       this.tracer.addToolCall(ctx.trace, toolCall.name, finalInput, err.message, Date.now() - toolStart, true)
       ctx.emit('tool_error', { name: toolCall.name, error: err.message, id: toolCall.id })
-      const errorMsg = JSON.stringify({ error: err.message })
+
+      const maxToolErrorRetries = options?.maxToolErrorRetries ?? ctx.agentConfig.maxToolErrorRetries ?? 3
+      const currentRetries = (ctx.toolErrorCounts.get(toolCall.name) ?? 0) + 1
+      ctx.toolErrorCounts.set(toolCall.name, currentRetries)
+
+      ctx.emit('self_healing_retry', {
+        toolName: toolCall.name,
+        error: err.message,
+        retryCount: currentRetries,
+        maxRetries: maxToolErrorRetries,
+      })
+
+      const errorMsg = JSON.stringify({
+        error: err.message,
+        selfHealingHint: `Tool '${toolCall.name}' execution failed (attempt ${currentRetries}/${maxToolErrorRetries}). Please analyze the error, adjust input arguments, and try again.`,
+      })
       ctx.addMessage({ role: 'tool', content: errorMsg, toolCallId: toolCall.id, name: toolCall.name })
+    }
+  }
+
+  private _checkBudgets(ctx: RunContext, options: RunOptions): void {
+    const config = ctx.agentConfig
+
+    // 1. Max tool calls budget check
+    const maxToolCalls = options.maxToolCalls ?? config.maxToolCalls
+    if (maxToolCalls !== undefined && ctx.totalToolCalls > maxToolCalls) {
+      const err = new ToolCallBudgetExceededError(ctx.totalToolCalls, maxToolCalls)
+      ctx.emit('budget_exceeded', { type: 'maxToolCalls', current: ctx.totalToolCalls, max: maxToolCalls })
+      throw err
+    }
+
+    // 2. Max duration budget check
+    const maxDurationMs = options.maxDurationMs ?? config.maxDurationMs
+    if (maxDurationMs !== undefined) {
+      const elapsed = Date.now() - ctx.startTime
+      if (elapsed > maxDurationMs) {
+        const err = new TimeoutBudgetExceededError(elapsed, maxDurationMs)
+        ctx.emit('budget_exceeded', { type: 'maxDurationMs', elapsed, max: maxDurationMs })
+        throw err
+      }
+    }
+
+    // 3. Max total tokens budget check
+    const maxTotalTokens = options.maxTotalTokens ?? config.maxTotalTokens
+    if (maxTotalTokens !== undefined && ctx.trace.totalUsage.totalTokens > maxTotalTokens) {
+      const err = new TokenBudgetExceededError(ctx.trace.totalUsage.totalTokens, maxTotalTokens)
+      ctx.emit('budget_exceeded', {
+        type: 'maxTotalTokens',
+        current: ctx.trace.totalUsage.totalTokens,
+        max: maxTotalTokens,
+      })
+      throw err
     }
   }
 
@@ -845,6 +949,34 @@ export class StructuredOutputValidationError extends Error {
   }
 }
 
+export class BudgetExceededError extends Error {
+  constructor(public readonly budgetType: string, message: string) {
+    super(`Run budget exceeded (${budgetType}): ${message}`)
+    this.name = 'BudgetExceededError'
+  }
+}
+
+export class ToolCallBudgetExceededError extends BudgetExceededError {
+  constructor(current: number, max: number) {
+    super('maxToolCalls', `Executed ${current} tool calls, exceeding maximum budget of ${max}.`)
+    this.name = 'ToolCallBudgetExceededError'
+  }
+}
+
+export class TimeoutBudgetExceededError extends BudgetExceededError {
+  constructor(elapsedMs: number, maxMs: number) {
+    super('maxDurationMs', `Execution time ${elapsedMs}ms exceeded maximum allowed duration of ${maxMs}ms.`)
+    this.name = 'TimeoutBudgetExceededError'
+  }
+}
+
+export class TokenBudgetExceededError extends BudgetExceededError {
+  constructor(totalTokens: number, maxTokens: number) {
+    super('maxTotalTokens', `Accumulated ${totalTokens} tokens, exceeding maximum budget of ${maxTokens}.`)
+    this.name = 'TokenBudgetExceededError'
+  }
+}
+
 // ─────────────────────────────────────────────
 // Type import for handoff tool builder
 // ─────────────────────────────────────────────
@@ -862,7 +994,11 @@ function resolveProviderName(config: AgentConfig, options: RunOptions): string {
   if (options.provider) return options.provider
   if (config.providerName) return config.providerName
 
-  const model = (config.model || '').toLowerCase()
+  return resolveProviderNameByModel(config.model || '', 'gemini')
+}
+
+function resolveProviderNameByModel(modelName: string, defaultProvider: string): string {
+  const model = modelName.toLowerCase()
   if (
     model.startsWith('groq/') ||
     model.includes('llama') ||
@@ -881,5 +1017,5 @@ function resolveProviderName(config: AgentConfig, options: RunOptions): string {
   if (model.includes('gemini') || model.startsWith('google/')) {
     return 'gemini'
   }
-  return 'gemini'
+  return defaultProvider
 }

@@ -58,6 +58,12 @@ var init_context = __esm({
       agentConfig;
       /** Track visited agents to detect handoff loops */
       visitedAgents;
+      /** Total tool executions in this run */
+      totalToolCalls;
+      /** Wall-clock start time of the run */
+      startTime;
+      /** Track error retries per tool name */
+      toolErrorCounts;
       constructor(options) {
         this.runId = uuid.v4();
         this.sessionId = options.sessionId;
@@ -71,6 +77,9 @@ var init_context = __esm({
         this.metadata = options.metadata ?? {};
         this.agentConfig = options.agentConfig;
         this.visitedAgents = /* @__PURE__ */ new Set([options.agentConfig.name]);
+        this.totalToolCalls = 0;
+        this.startTime = Date.now();
+        this.toolErrorCounts = /* @__PURE__ */ new Map();
       }
       /**
        * Add a message to the current run's context.
@@ -850,8 +859,12 @@ var init_types = __esm({
 var runner_exports = {};
 __export(runner_exports, {
   AgentRunner: () => exports.AgentRunner,
+  BudgetExceededError: () => exports.BudgetExceededError,
   HandoffLoopError: () => exports.HandoffLoopError,
-  StructuredOutputValidationError: () => exports.StructuredOutputValidationError
+  StructuredOutputValidationError: () => exports.StructuredOutputValidationError,
+  TimeoutBudgetExceededError: () => exports.TimeoutBudgetExceededError,
+  TokenBudgetExceededError: () => exports.TokenBudgetExceededError,
+  ToolCallBudgetExceededError: () => exports.ToolCallBudgetExceededError
 });
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -859,7 +872,10 @@ function sleep(ms) {
 function resolveProviderName(config, options) {
   if (options.provider) return options.provider;
   if (config.providerName) return config.providerName;
-  const model = (config.model || "").toLowerCase();
+  return resolveProviderNameByModel(config.model || "", "gemini");
+}
+function resolveProviderNameByModel(modelName, defaultProvider) {
+  const model = modelName.toLowerCase();
   if (model.startsWith("groq/") || model.includes("llama") || model.includes("mixtral") || model.includes("deepseek") || model.includes("gemma")) {
     return "groq";
   }
@@ -872,9 +888,9 @@ function resolveProviderName(config, options) {
   if (model.includes("gemini") || model.startsWith("google/")) {
     return "gemini";
   }
-  return "gemini";
+  return defaultProvider;
 }
-exports.AgentRunner = void 0; exports.HandoffLoopError = void 0; exports.StructuredOutputValidationError = void 0;
+exports.AgentRunner = void 0; exports.HandoffLoopError = void 0; exports.StructuredOutputValidationError = void 0; exports.BudgetExceededError = void 0; exports.ToolCallBudgetExceededError = void 0; exports.TimeoutBudgetExceededError = void 0; exports.TokenBudgetExceededError = void 0;
 var init_runner = __esm({
   "src/core/runner.ts"() {
     init_context();
@@ -945,7 +961,6 @@ var init_runner = __esm({
         emitter.on("event", (event) => {
           buffer.push(event);
         });
-        this.run(agent, input, { ...options });
         const sessionId = options.sessionId ?? uuid.v4();
         const storageAdapter = agent.config.storageAdapter ?? new exports.InMemoryStorage();
         const sessionManager = new exports.SessionManager(storageAdapter);
@@ -1018,10 +1033,28 @@ var init_runner = __esm({
         ctx.addMessage({ role: "user", content: finalInput });
         const handoffTools = this._buildHandoffTools(config);
         const allTools = [...config.tools ?? [], ...handoffTools];
-        if (config.reasoningMode === "harness") {
-          return this._runHarnessLoop(ctx, allTools, options, sessionManager, maxTurns);
+        try {
+          if (config.reasoningMode === "harness") {
+            return await this._runHarnessLoop(ctx, allTools, options, sessionManager, maxTurns);
+          }
+          return await this._runStandardLoop(ctx, allTools, options, sessionManager, maxTurns);
+        } catch (err) {
+          if (err instanceof exports.BudgetExceededError) {
+            await this._persistSession(ctx, sessionManager, "");
+            return {
+              output: "",
+              rawOutput: "",
+              status: "budget_exceeded",
+              sessionId: ctx.sessionId,
+              traceId: ctx.trace.runId,
+              turns: ctx.turn,
+              usage: ctx.trace.totalUsage,
+              agentName: ctx.agentName,
+              error: err.message
+            };
+          }
+          throw err;
         }
-        return this._runStandardLoop(ctx, allTools, options, sessionManager, maxTurns);
       }
       // ─────────────────────────────────────────────
       // Standard Mode Loop (native tool calling)
@@ -1031,6 +1064,7 @@ var init_runner = __esm({
         const toolList = tools ?? [];
         while (ctx.turn < maxTurns) {
           ctx.turn++;
+          this._checkBudgets(ctx, options);
           const callStart = Date.now();
           let response;
           try {
@@ -1058,6 +1092,7 @@ var init_runner = __esm({
             finishReason: response.finishReason,
             turn: ctx.turn
           });
+          this._checkBudgets(ctx, options);
           if (response.toolCalls.length > 0) {
             ctx.addMessage({ role: "assistant", content: response.content || "", toolCalls: response.toolCalls });
             for (const toolCall of response.toolCalls) {
@@ -1297,16 +1332,31 @@ var init_runner = __esm({
       async _callWithRetry(ctx, messages, tools, options) {
         const config = ctx.agentConfig;
         const maxRetries = config.maxRetries ?? 3;
-        const providerName = resolveProviderName(config, options);
-        const fallbacks = config.fallbackProviders ?? [];
-        const providerChain = [providerName, ...fallbacks];
+        const primaryModel = config.model ?? "gemini-2.5-flash";
+        const primaryProvider = resolveProviderName(config, options);
+        const fallbackModels = options.fallbackModels ?? config.fallbackModels ?? [];
+        const fallbackProviders = config.fallbackProviders ?? [];
+        const candidateChain = [
+          { provider: primaryProvider, model: primaryModel }
+        ];
+        for (const fModel of fallbackModels) {
+          const fProv = resolveProviderNameByModel(fModel, primaryProvider);
+          if (!candidateChain.some((c) => c.provider === fProv && c.model === fModel)) {
+            candidateChain.push({ provider: fProv, model: fModel });
+          }
+        }
+        for (const fProv of fallbackProviders) {
+          if (!candidateChain.some((c) => c.provider === fProv)) {
+            candidateChain.push({ provider: fProv, model: primaryModel });
+          }
+        }
         let lastError;
-        for (const pName of providerChain) {
-          const provider = exports.providerRegistry.get(pName);
+        for (const candidate of candidateChain) {
+          const provider = exports.providerRegistry.get(candidate.provider);
           for (let attempt = 0; attempt <= maxRetries; attempt++) {
             try {
               const response = await provider.chat(messages, tools, {
-                model: config.model ?? "gemini-2.5-flash",
+                model: candidate.model,
                 temperature: options.temperature ?? config.temperature,
                 maxTokens: options.maxTokens ?? config.maxTokens,
                 responseFormat: config.outputSchema && config.reasoningMode !== "harness" ? "json_object" : "text"
@@ -1317,15 +1367,28 @@ var init_runner = __esm({
               lastError = err;
               if (error instanceof exports.ProviderError && error.retryable && attempt < maxRetries) {
                 const delay = Math.pow(2, attempt) * 500;
-                ctx.emit("retry", { provider: pName, attempt: attempt + 1, delay, error: err.message });
+                ctx.emit("retry", {
+                  provider: candidate.provider,
+                  model: candidate.model,
+                  attempt: attempt + 1,
+                  delay,
+                  error: err.message
+                });
                 await sleep(delay);
                 continue;
               }
+              ctx.emit("retry", {
+                provider: candidate.provider,
+                model: candidate.model,
+                attempt: attempt + 1,
+                fallback: true,
+                error: err.message
+              });
               break;
             }
           }
         }
-        throw lastError ?? new Error("All providers failed");
+        throw lastError ?? new Error("All providers and fallback models failed");
       }
       async _executeToolCall(ctx, toolCall, tools, options) {
         const tool = tools.find((t) => t.name === toolCall.name);
@@ -1392,6 +1455,8 @@ var init_runner = __esm({
             throw new exports.ApprovalRequiredSignal(approvalReq);
           }
         }
+        ctx.totalToolCalls++;
+        this._checkBudgets(ctx, options ?? {});
         ctx.emit("tool_started", { name: toolCall.name, input: finalInput, id: toolCall.id });
         const toolStart = Date.now();
         try {
@@ -1410,8 +1475,48 @@ var init_runner = __esm({
           const err = error instanceof Error ? error : new Error(String(error));
           this.tracer.addToolCall(ctx.trace, toolCall.name, finalInput, err.message, Date.now() - toolStart, true);
           ctx.emit("tool_error", { name: toolCall.name, error: err.message, id: toolCall.id });
-          const errorMsg = JSON.stringify({ error: err.message });
+          const maxToolErrorRetries = options?.maxToolErrorRetries ?? ctx.agentConfig.maxToolErrorRetries ?? 3;
+          const currentRetries = (ctx.toolErrorCounts.get(toolCall.name) ?? 0) + 1;
+          ctx.toolErrorCounts.set(toolCall.name, currentRetries);
+          ctx.emit("self_healing_retry", {
+            toolName: toolCall.name,
+            error: err.message,
+            retryCount: currentRetries,
+            maxRetries: maxToolErrorRetries
+          });
+          const errorMsg = JSON.stringify({
+            error: err.message,
+            selfHealingHint: `Tool '${toolCall.name}' execution failed (attempt ${currentRetries}/${maxToolErrorRetries}). Please analyze the error, adjust input arguments, and try again.`
+          });
           ctx.addMessage({ role: "tool", content: errorMsg, toolCallId: toolCall.id, name: toolCall.name });
+        }
+      }
+      _checkBudgets(ctx, options) {
+        const config = ctx.agentConfig;
+        const maxToolCalls = options.maxToolCalls ?? config.maxToolCalls;
+        if (maxToolCalls !== void 0 && ctx.totalToolCalls > maxToolCalls) {
+          const err = new exports.ToolCallBudgetExceededError(ctx.totalToolCalls, maxToolCalls);
+          ctx.emit("budget_exceeded", { type: "maxToolCalls", current: ctx.totalToolCalls, max: maxToolCalls });
+          throw err;
+        }
+        const maxDurationMs = options.maxDurationMs ?? config.maxDurationMs;
+        if (maxDurationMs !== void 0) {
+          const elapsed = Date.now() - ctx.startTime;
+          if (elapsed > maxDurationMs) {
+            const err = new exports.TimeoutBudgetExceededError(elapsed, maxDurationMs);
+            ctx.emit("budget_exceeded", { type: "maxDurationMs", elapsed, max: maxDurationMs });
+            throw err;
+          }
+        }
+        const maxTotalTokens = options.maxTotalTokens ?? config.maxTotalTokens;
+        if (maxTotalTokens !== void 0 && ctx.trace.totalUsage.totalTokens > maxTotalTokens) {
+          const err = new exports.TokenBudgetExceededError(ctx.trace.totalUsage.totalTokens, maxTotalTokens);
+          ctx.emit("budget_exceeded", {
+            type: "maxTotalTokens",
+            current: ctx.trace.totalUsage.totalTokens,
+            max: maxTotalTokens
+          });
+          throw err;
         }
       }
       async _validateStructuredOutput(ctx, output, tools, options, sessionManager, maxTurns) {
@@ -1495,6 +1600,32 @@ ${agentList}`;
         this.name = "StructuredOutputValidationError";
       }
       validationErrors;
+    };
+    exports.BudgetExceededError = class extends Error {
+      constructor(budgetType, message) {
+        super(`Run budget exceeded (${budgetType}): ${message}`);
+        this.budgetType = budgetType;
+        this.name = "BudgetExceededError";
+      }
+      budgetType;
+    };
+    exports.ToolCallBudgetExceededError = class extends exports.BudgetExceededError {
+      constructor(current, max) {
+        super("maxToolCalls", `Executed ${current} tool calls, exceeding maximum budget of ${max}.`);
+        this.name = "ToolCallBudgetExceededError";
+      }
+    };
+    exports.TimeoutBudgetExceededError = class extends exports.BudgetExceededError {
+      constructor(elapsedMs, maxMs) {
+        super("maxDurationMs", `Execution time ${elapsedMs}ms exceeded maximum allowed duration of ${maxMs}ms.`);
+        this.name = "TimeoutBudgetExceededError";
+      }
+    };
+    exports.TokenBudgetExceededError = class extends exports.BudgetExceededError {
+      constructor(totalTokens, maxTokens) {
+        super("maxTotalTokens", `Accumulated ${totalTokens} tokens, exceeding maximum budget of ${maxTokens}.`);
+        this.name = "TokenBudgetExceededError";
+      }
     };
   }
 });
@@ -1834,6 +1965,34 @@ var Agent = class {
    */
   withTemperature(temperature) {
     this.config.temperature = temperature;
+    return this;
+  }
+  /**
+   * Set fallback models (tried in order on primary model failure).
+   */
+  withFallbackModels(...models) {
+    this.config.fallbackModels = models;
+    return this;
+  }
+  /**
+   * Set maximum tool calls allowed for a single run.
+   */
+  withMaxToolCalls(maxToolCalls) {
+    this.config.maxToolCalls = maxToolCalls;
+    return this;
+  }
+  /**
+   * Set maximum wall-clock duration allowed for a single run in milliseconds.
+   */
+  withMaxDuration(maxDurationMs) {
+    this.config.maxDurationMs = maxDurationMs;
+    return this;
+  }
+  /**
+   * Set maximum accumulated tokens allowed for a run.
+   */
+  withMaxTokens(maxTotalTokens) {
+    this.config.maxTotalTokens = maxTotalTokens;
     return this;
   }
   // ─────────────────────────────────────────────

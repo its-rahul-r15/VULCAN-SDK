@@ -1,0 +1,48 @@
+{
+  "$schema": "https://mintlify.com/docs.json",
+  "name": "Vulcan SDK",
+  "theme": "mint",
+  "colors": {
+    "primary": "#E25822",
+    "light": "#F0703C",
+    "dark": "#B83B0F"
+  },
+  "navigation": {
+    "groups": [
+      {
+        "group": "Getting Started",
+        "pages": [
+          "docs/index",
+          "docs/installation",
+          "docs/quickstart"
+        ]
+      },
+      {
+        "group": "Core Concepts",
+        "pages": [
+          "docs/providers",
+          "docs/tools",
+          "docs/budgets-reliability",
+          "docs/guardrails",
+          "docs/memory-sessions",
+          "docs/streaming"
+        ]
+      },
+      {
+        "group": "Advanced Features",
+        "pages": [
+          "docs/handoffs",
+          "docs/tracing",
+          "docs/error-handling"
+        ]
+      },
+      {
+        "group": "Reference",
+        "pages": [
+          "docs/examples",
+          "docs/api-reference"
+        ]
+      }
+    ]
+  }
+}

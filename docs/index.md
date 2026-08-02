@@ -12,6 +12,7 @@ Vulcan allows you to build multi-provider, observable, and guardrailed autonomou
 - 🔧 **Type-safe Tool Invocations**: Auto-validates inputs using Zod.
 - 🔄 **Bidirectional Handoffs**: Transfer conversations between agents automatically with built-in loop detection.
 - 🛡️ **Flexible Guardrails**: Clean input/output/tool interception with support for PII scrubbing and custom functions.
+- ⚡ **Budgets & Self-Healing**: Max tool calls, duration timeouts, token budgets, and LLM tool auto-correction retries.
 - 💾 **Pluggable Session Memory**: SQLite persistence and TTL memory out-of-the-box.
 - 📡 **Real-time Event Streaming**: Generates stream chunks for tools, handoffs, guardrails, and reasoning.
 - 📊 **Detailed Tracing**: Export beautiful execution charts or JSON logs for observability platforms.
@@ -26,11 +27,12 @@ Get started by following the guides below:
 2. [Installation](./installation.md) — Package managers and provider dependencies.
 3. [API Reference](./api-reference.md) — Complete API documentation for Agent, Tool, and Runner.
 4. [Tools](./tools.md) — Designing custom executable schemas.
-5. [Guardrails](./guardrails.md) — Securing applications at input, output, and tool levels.
-6. [Memory & Sessions](./memory-sessions.md) — Context management and session databases.
-7. [Agent Handoffs](./handoffs.md) — Routing conversations through multi-agent networks.
-8. [Providers](./providers.md) — Integrating OpenAI, Gemini, Claude, or custom LLMs.
-9. [Streaming & Events](./streaming.md) — Listening to real-time agent loop outputs.
-10. [Observability & Tracing](./tracing.md) — Visualizing token counts, run times, and calls.
-11. [Error Handling](./error-handling.md) — Gracefully recovering from LLM failures.
-12. [Examples](./examples.md) — List of functional demonstrations.
+5. [Budgets & Reliability](./budgets-reliability.md) — Run budgets, tool self-healing, and multi-model fallbacks.
+6. [Guardrails](./guardrails.md) — Securing applications at input, output, and tool levels.
+7. [Memory & Sessions](./memory-sessions.md) — Context management and session databases.
+8. [Agent Handoffs](./handoffs.md) — Routing conversations through multi-agent networks.
+9. [Providers](./providers.md) — Integrating OpenAI, Gemini, Claude, or custom LLMs.
+10. [Streaming & Events](./streaming.md) — Listening to real-time agent loop outputs.
+11. [Observability & Tracing](./tracing.md) — Visualizing token counts, run times, and calls.
+12. [Error Handling](./error-handling.md) — Gracefully recovering from LLM failures.
+13. [Examples](./examples.md) — List of functional demonstrations.
