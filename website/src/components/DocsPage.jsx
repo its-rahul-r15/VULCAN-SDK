@@ -27,6 +27,13 @@ const SIDEBAR_ITEMS = [
       { id: 'handoffs', title: 'Agent Handoffs' },
       { id: 'tracing', title: 'Tracing & Observability' },
     ]
+  },
+  {
+    category: 'Reference',
+    pages: [
+      { id: 'examples', title: 'Examples & Recipes' },
+      { id: 'api-reference', title: 'API Reference' },
+    ]
   }
 ]
 

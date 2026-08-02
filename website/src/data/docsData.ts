@@ -856,4 +856,162 @@ const multiModelAgent = Vulcan.createAgent({
       },
     ],
   },
+
+  examples: {
+    id: 'examples',
+    title: 'Examples & Recipes',
+    category: 'Reference',
+    description: 'Production-ready code snippets and end-to-end recipes demonstrating real-world Vulcan SDK usage.',
+    sections: [
+      {
+        title: '1. Basic Agent with Custom Tools',
+        content: 'Create a standalone assistant with Zod-validated custom tool functions.',
+        code: `import { Vulcan, z } from 'vulcan-agentic-sdk'
+
+const calculator = Vulcan.createTool({
+  name: 'calculator',
+  description: 'Perform arithmetic operations',
+  inputSchema: z.object({
+    operation: z.enum(['add', 'subtract', 'multiply', 'divide']),
+    a: z.number(),
+    b: z.number(),
+  }),
+  async execute({ operation, a, b }) {
+    const ops = { add: a + b, subtract: a - b, multiply: a * b, divide: a / b }
+    return { result: ops[operation] }
+  },
+})
+
+const agent = Vulcan.createAgent({
+  name: 'math-agent',
+  instructions: 'You are a math assistant. Always use the calculator tool.',
+  model: 'gemini-2.5-flash',
+  tools: [calculator],
+})
+
+const result = await Vulcan.run(agent, 'What is 42 x 13?')
+console.log(result.output)`,
+        codeLanguage: 'typescript',
+        codeFilename: 'basic-agent.ts',
+      },
+      {
+        title: '2. Multi-Agent Network with Handoffs',
+        content: 'Route customer support requests dynamically between specialized agents.',
+        code: `import { Vulcan } from 'vulcan-agentic-sdk'
+
+const billingAgent = Vulcan.createAgent({
+  name: 'billing-specialist',
+  instructions: 'You assist users with invoices, payments, and refunds.',
+})
+
+const techAgent = Vulcan.createAgent({
+  name: 'tech-support',
+  instructions: 'You troubleshoot API issues and software bugs.',
+})
+
+const triageAgent = Vulcan.createAgent({
+  name: 'support-triage',
+  instructions: 'Assess user requests and hand off to billing-specialist or tech-support.',
+  handoffs: [billingAgent, techAgent],
+})
+
+const result = await Vulcan.run(triageAgent, 'I was charged twice on my invoice')
+console.log('Final Agent:', result.agentName)
+console.log('Output:', result.output)`,
+        codeLanguage: 'typescript',
+        codeFilename: 'handoff-network.ts',
+      },
+      {
+        title: '3. Production Guardrails & Structured Output',
+        content: 'Enforce strict JSON schemas and sanitize sensitive PII data automatically.',
+        code: `import { Vulcan, z, PIIScrubberGuardrail } from 'vulcan-agentic-sdk'
+
+const UserProfileSchema = z.object({
+  username: z.string(),
+  role: z.enum(['admin', 'user', 'guest']),
+  summary: z.string(),
+})
+
+const agent = Vulcan.createAgent({
+  name: 'sanitizer-agent',
+  instructions: 'Extract profile info from text.',
+  guardrails: [new PIIScrubberGuardrail()],
+  outputSchema: UserProfileSchema,
+})
+
+const result = await Vulcan.run<z.infer<typeof UserProfileSchema>>(
+  agent,
+  'User John Doe (email john@example.com) is an admin who manages billing.'
+)
+
+console.log(result.output.username) // Typed object!`,
+        codeLanguage: 'typescript',
+        codeFilename: 'guardrails-example.ts',
+      },
+    ],
+  },
+
+  'api-reference': {
+    id: 'api-reference',
+    title: 'API Reference',
+    category: 'Reference',
+    description: 'Complete API reference specification for Vulcan core classes, configurations, options, and types.',
+    sections: [
+      {
+        title: 'Vulcan & Agent API',
+        content: 'Core static factory methods and fluent builder API for constructing agents.',
+        table: {
+          headers: ['Method / Builder', 'Parameters', 'Return Type', 'Description'],
+          rows: [
+            ['Vulcan.createAgent(config)', 'AgentConfig', 'Agent', 'Factory method to create a static Agent instance.'],
+            ['Vulcan.createTool(config)', 'ToolConfig', 'ToolDefinition', 'Creates a Zod-validated tool definition.'],
+            ['Vulcan.run(agent, input, options)', 'Agent, string, RunOptions', 'Promise<RunResult>', 'Executes an agent run to completion.'],
+            ['Vulcan.stream(agent, input, options)', 'Agent, string, RunOptions', 'AsyncGenerator<VulcanEvent>', 'Streams execution events in real-time.'],
+            ['agent.withTool(tool)', 'ToolDefinition', 'this', 'Fluent builder to attach a single tool.'],
+            ['agent.withHandoff(targetAgent)', 'Agent', 'this', 'Registers a target agent for handoff.'],
+            ['agent.withMaxToolCalls(n)', 'number', 'this', 'Sets max tool execution budget for run.'],
+            ['agent.withMaxDuration(ms)', 'number', 'this', 'Sets wall-clock execution time limit.'],
+            ['agent.withFallbackModels(...models)', 'string[]', 'this', 'Configures sequential fallback models.'],
+          ]
+        }
+      },
+      {
+        title: 'AgentConfig & RunOptions',
+        content: 'Configuration options accepted by createAgent() and Vulcan.run().',
+        table: {
+          headers: ['Property', 'Type', 'Default', 'Description'],
+          rows: [
+            ['name', 'string', 'Required', 'Unique name for agent identification & handoffs.'],
+            ['instructions', 'string', 'Required', 'System instructions guiding agent behavior.'],
+            ['model', 'string', 'gemini-2.5-flash', 'Model identifier (e.g. gpt-4o, claude-3-5-sonnet).'],
+            ['providerName', 'string', 'gemini', 'LLM provider adapter identifier.'],
+            ['fallbackProviders', 'string[]', '[]', 'Backup provider list tried in order on failure.'],
+            ['fallbackModels', 'string[]', '[]', 'Backup model list tried in order on failure.'],
+            ['maxTurns', 'number', '20', 'Max execution turns before stopping.'],
+            ['maxToolCalls', 'number', 'undefined', 'Hard limit on tool call executions per run.'],
+            ['maxDurationMs', 'number', 'undefined', 'Hard limit on wall-clock execution time (ms).'],
+            ['maxTotalTokens', 'number', 'undefined', 'Hard limit on cumulative token usage.'],
+            ['maxToolErrorRetries', 'number', '3', 'Max self-healing retries for failing tool calls.'],
+          ]
+        }
+      },
+      {
+        title: 'RunResult Specification',
+        content: 'Result object returned by Vulcan.run().',
+        table: {
+          headers: ['Field', 'Type', 'Description'],
+          rows: [
+            ['output', 'T (string | JSON)', 'Final typed output produced by the agent.'],
+            ['rawOutput', 'string', 'Unparsed string output from final turn.'],
+            ['status', 'RunStatus', 'completed | failed | max_turns_reached | handoff | guardrail_blocked | requires_approval | budget_exceeded'],
+            ['sessionId', 'string', 'Session memory identifier.'],
+            ['traceId', 'string', 'Unique telemetry trace ID.'],
+            ['turns', 'number', 'Total execution turns consumed.'],
+            ['usage', 'TokenUsage', 'Prompt, completion, and total token counters.'],
+            ['agentName', 'string', 'Name of the agent that produced final answer.'],
+          ]
+        }
+      },
+    ],
+  },
 }
