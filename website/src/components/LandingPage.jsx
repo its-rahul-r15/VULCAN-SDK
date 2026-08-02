@@ -252,7 +252,7 @@ const COMMUNITY_NOTES = [
   },
   {
     quote: 'Type-safe tool calls with Zod out of the box meant we skipped writing our own validation layer entirely.',
-    role: 'Full-stack developer', initials: 'FS', color: '#8b5cf6',
+    role: 'Full-stack developer', initials: 'FS', color: '#10b981',
   },
   {
     quote: 'Built-in web search and sandbox tools saved a full sprint of glue code we would have otherwise written ourselves.',
@@ -272,6 +272,112 @@ const COMMUNITY_NOTES = [
   },
 ]
 
+// ── Workbench scenarios: legacy boilerplate vs Vulcan, toggled in one card ──
+const WORKBENCH_SCENARIOS = {
+  basic: {
+    label: 'Basic Agent & Tools',
+    legacyName: 'LangChain / LangGraph',
+    legacyLines: 65,
+    legacyCode: `// StateGraph + ToolNode setup
+import { ChatOpenAI } from "@langchain/openai"
+import { ToolNode } from "@langchain/langgraph"
+import { StateGraph, MessagesAnnotation } from "@langchain/langgraph"
+
+const model = new ChatOpenAI({ model: "gpt-4o" }).bindTools(tools)
+
+function shouldContinue({ messages }) {
+  const last = messages[messages.length - 1]
+  return last.tool_calls?.length ? "tools" : "__end__"
+}
+
+async function callModel(state) {
+  const res = await model.invoke(state.messages)
+  return { messages: [res] }
+}
+
+const workflow = new StateGraph(MessagesAnnotation)
+workflow.addNode("agent", callModel)
+workflow.addNode("tools", new ToolNode(tools))
+workflow.addEdge("__start__", "agent")
+workflow.addConditionalEdges("agent", shouldContinue)
+
+const app = workflow.compile()
+const res = await app.invoke({ messages: [input] })
+// ...plus error handling, typing, and state schemas (65+ lines total)`,
+    vulcanName: 'Vulcan SDK',
+    vulcanLines: 6,
+    vulcanCode: `import { Vulcan } from 'vulcan-agentic-sdk'
+
+const agent = Vulcan.createAgent({
+  name: 'assistant',
+  tools: [searchTool, calcTool],
+})
+
+const { output } = await Vulcan.run(agent, 'What is 128 x 37?')
+// -> Auto tool-loop + Zod validation, zero extra setup`,
+  },
+  guardrails: {
+    label: 'Safety & Guardrails',
+    legacyName: 'Custom Interceptor Middleware',
+    legacyLines: 45,
+    legacyCode: `class PIIInterceptor {
+  async intercept(input) {
+    if (input.match(/[\\w.-]+@[\\w.-]+\\.\\w+/)) {
+      throw new Error("PII leak detected")
+    }
+  }
+}
+
+class KeywordBlocker {
+  constructor(keywords) { this.keywords = keywords }
+  async check(text) {
+    return !this.keywords.some(k => text.toLowerCase().includes(k))
+  }
+}
+
+// ...wire both manually around every node, handle
+// ordering, async errors, and output scrubbing (45+ lines)`,
+    vulcanName: 'Vulcan SDK',
+    vulcanLines: 5,
+    vulcanCode: `import { Vulcan, PIIScrubberGuardrail, KeywordBlockGuardrail } from 'vulcan-agentic-sdk'
+
+const agent = Vulcan.createAgent({
+  name: 'secure-agent',
+  guardrails: [
+    new KeywordBlockGuardrail(['jailbreak']),
+    new PIIScrubberGuardrail(),
+  ],
+})
+// -> Intercepts prompt, tool input, and output -- automatically`,
+  },
+  handoffs: {
+    label: 'Multi-Agent Handoffs',
+    legacyName: 'Graph State Routing',
+    legacyLines: 55,
+    legacyCode: `const workflow = new StateGraph(MultiAgentState)
+workflow.addNode("billing_agent", billingHandler)
+workflow.addNode("support_agent", supportHandler)
+
+workflow.addConditionalEdges("triage", (state) => {
+  if (state.visited.includes(state.target)) {
+    throw new Error("Infinite handoff loop detected")
+  }
+  return state.target
+})
+
+// ...plus manual visited-state tracking, context transfer,
+// and cycle-safety checks across every node (55+ lines)
+
+const app = workflow.compile()`,
+    vulcanName: 'Vulcan SDK',
+    vulcanLines: 3,
+    vulcanCode: `const triage = Vulcan.createAgent({ name: 'triage' })
+  .withHandoff(billingAgent)
+  .withHandoff(supportAgent)
+// -> Cycle detection and context transfer built in`,
+  },
+}
+
 export function LandingPage({ onViewChange, theme }) {
   const isDark = theme === 'dark'
   const [copied, setCopied] = useState(false)
@@ -282,6 +388,8 @@ export function LandingPage({ onViewChange, theme }) {
   const [heroModelOpen, setHeroModelOpen] = useState(false)
   const [workbenchScenario, setWorkbenchScenario] = useState('basic')
   const [workbenchCopied, setWorkbenchCopied] = useState(false)
+  const [compareMode, setCompareMode] = useState('legacy')
+  const activeScenario = WORKBENCH_SCENARIOS[workbenchScenario]
 
   const copyInstall = () => {
     navigator.clipboard.writeText('npm install vulcan-agentic-sdk')
@@ -294,7 +402,7 @@ export function LandingPage({ onViewChange, theme }) {
     border: isDark ? '#1a1a1a' : '#e8e8e8',
     labelColor: '#0070f3',
     textPrimary: isDark ? '#ffffff' : '#111111',
-    textSecondary: isDark ? '#888888' : '#555555',
+    textSecondary: isDark ? '#a1a1a1' : '#4d4d4d',
   }
 
   return (
@@ -323,7 +431,7 @@ export function LandingPage({ onViewChange, theme }) {
           <div style={{
             position: 'absolute', top: -100, left: '50%', transform: 'translateX(-50%)',
             width: 1100, height: 600, zIndex: 0, pointerEvents: 'none', opacity: 0.6,
-            background: 'radial-gradient(ellipse 60% 50% at 50% 0%, #dbeafe55, transparent), radial-gradient(ellipse 40% 40% at 80% 20%, #e0d4fe44, transparent)',
+            background: 'radial-gradient(ellipse 60% 50% at 50% 0%, #dbeafe55, transparent), radial-gradient(ellipse 40% 40% at 80% 20%, #d1fae544, transparent)',
           }} />
         )}
 
@@ -336,22 +444,27 @@ export function LandingPage({ onViewChange, theme }) {
             {/* Headline */}
             <h1 className="hero-headline" style={{
               fontSize: 'clamp(26px, 5vw, 52px)',
-              fontWeight: 700,
-              letterSpacing: '-1.2px',
-              lineHeight: 1.16,
+              fontWeight: 800,
+              letterSpacing: '-1.5px',
+              lineHeight: 1.14,
               margin: '0 0 16px',
               color: s.textPrimary,
               wordBreak: 'normal',
               overflowWrap: 'break-word',
             }}>
-              Type-safe AI agents.<br />
-              <span style={{ color: '#0070f3' }}>Zero framework bloat.</span>
+              Build agents you can trust{' '}
+              <span style={{
+                background: 'linear-gradient(90deg, #0070f3 0%, #10b981 100%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text',
+              }}>in production.</span>
             </h1>
 
-            {/* Subtitle */}
+            {/* Subtitle — clean text layout */}
             <p className="hero-subtitle" style={{
               fontSize: 'clamp(14px, 3.5vw, 16px)',
-              lineHeight: '1.65',
+              lineHeight: '1.75',
               color: s.textSecondary,
               maxWidth: '460px',
               width: '100%',
@@ -359,8 +472,11 @@ export function LandingPage({ onViewChange, theme }) {
               wordBreak: 'normal',
               overflowWrap: 'break-word',
             }}>
-              Build resilient, multi-turn agent workflows with Zod-validated tools,
-              cycle-blocking handoffs, and custom safety guardrails — all in TypeScript.
+              Type-safe tools. Cycle-blocked handoffs. Real guardrails.<br />
+              No framework bloat —{' '}
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.9em', color: isDark ? '#aaaaaa' : '#555555' }}>
+                just TypeScript and Zod.
+              </span>
             </p>
 
             {/* CTA row */}
@@ -388,14 +504,15 @@ export function LandingPage({ onViewChange, theme }) {
                   height: '42px', padding: '0 16px', borderRadius: '999px',
                   background: isDark ? '#000' : '#fff',
                   border: `1px solid ${isDark ? '#2a2a2a' : '#ddd'}`,
-                  color: isDark ? '#a1a1a1' : '#555',
+                  color: isDark ? '#a1a1a1' : '#626262',
                   fontSize: '12px', fontFamily: 'var(--font-mono)', cursor: 'pointer',
                   display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
                   transition: 'border-color 0.15s, color 0.15s',
                   maxWidth: '100%', boxSizing: 'border-box',
                 }}
+                aria-label="Copy npm install command"
                 onMouseEnter={e => { e.currentTarget.style.borderColor = '#0070f3'; e.currentTarget.style.color = isDark ? '#fff' : '#111' }}
-                onMouseLeave={e => { e.currentTarget.style.borderColor = isDark ? '#2a2a2a' : '#ddd'; e.currentTarget.style.color = isDark ? '#a1a1a1' : '#555' }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor = isDark ? '#2a2a2a' : '#ddd'; e.currentTarget.style.color = isDark ? '#a1a1a1' : '#626262' }}
               >
                 <span style={{ color: '#0070f3', fontWeight: 700, flexShrink: 0 }}>$</span>
                 <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>npm i vulcan-agentic-sdk</span>
@@ -763,60 +880,39 @@ export function LandingPage({ onViewChange, theme }) {
       </section>
 
       {/* ══════════════════════════════════════════════════════════════════════
-          §2 INTERACTIVE CODE WORKBENCH (Legacy vs Vulcan)
+          §2 INTERACTIVE CODE WORKBENCH (Legacy vs Vulcan — toggle compare)
       ══════════════════════════════════════════════════════════════════════ */}
       <section style={{
         borderTop: `1px solid ${s.border}`,
         background: isDark ? '#050505' : '#ffffff',
         padding: 'clamp(48px, 6vw, 80px) clamp(16px, 4vw, 40px)',
       }}>
-        <div style={{ maxWidth: '1280px', margin: '0 auto' }}>
+        <div style={{ maxWidth: '860px', margin: '0 auto' }}>
           {/* Section Header */}
-          <div style={{ marginBottom: '36px', textAlign: 'center' }}>
+          <div style={{ marginBottom: '32px', textAlign: 'center' }}>
             <div style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#0070f3', marginBottom: '10px' }}>
               Developer Workbench
             </div>
             <h2 style={{ fontSize: 'clamp(24px, 3.5vw, 38px)', fontWeight: 700, letterSpacing: '-1px', color: s.textPrimary, margin: '0 0 12px' }}>
-              Built for Production. Not Demos.
+              See the difference yourself.
             </h2>
-            <p style={{ fontSize: '15px', color: s.textSecondary, maxWidth: '580px', margin: '0 auto', lineHeight: '1.65' }}>
-              Select a real-world scenario to see how Vulcan eliminates hundreds of lines of fragile graph boilerplate.
+            <p style={{ fontSize: '14.5px', color: s.textSecondary, maxWidth: '480px', margin: '0 auto', lineHeight: '1.6' }}>
+              Pick a scenario, then flip the switch to see what you'd write without Vulcan — and with it.
             </p>
           </div>
 
-          {/* Scenario Tabs Bar */}
-          <div style={{
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            gap: '8px',
-            flexWrap: 'wrap',
-            marginBottom: '28px',
-          }}>
-            {[
-              { id: 'basic', label: 'Basic Agent & Tools' },
-              { id: 'guardrails', label: 'Safety & Guardrails' },
-              { id: 'handoffs', label: 'Multi-Agent Handoffs' },
-            ].map(sc => (
+          {/* Scenario Tabs */}
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', flexWrap: 'wrap', marginBottom: '20px' }}>
+            {Object.entries(WORKBENCH_SCENARIOS).map(([id, sc]) => (
               <button
-                key={sc.id}
-                onClick={() => setWorkbenchScenario(sc.id)}
+                key={id}
+                onClick={() => { setWorkbenchScenario(id); setCompareMode('legacy') }}
                 style={{
-                  padding: '8px 18px',
-                  borderRadius: '999px',
-                  fontSize: '13px',
-                  fontFamily: 'system-ui, -apple-system, sans-serif',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  border: workbenchScenario === sc.id
-                    ? '1px solid #0070f3'
-                    : `1px solid ${isDark ? '#222222' : '#e0e0e0'}`,
-                  background: workbenchScenario === sc.id
-                    ? (isDark ? 'rgba(0,112,243,0.15)' : '#0070f3')
-                    : (isDark ? '#0a0a0a' : '#ffffff'),
-                  color: workbenchScenario === sc.id
-                    ? (isDark ? '#38bdf8' : '#ffffff')
-                    : (isDark ? '#888888' : '#555555'),
+                  padding: '7px 16px', borderRadius: '999px', fontSize: '12.5px',
+                  fontFamily: 'system-ui, -apple-system, sans-serif', fontWeight: 600, cursor: 'pointer',
+                  border: workbenchScenario === id ? '1px solid #0070f3' : `1px solid ${isDark ? '#222222' : '#e0e0e0'}`,
+                  background: workbenchScenario === id ? (isDark ? 'rgba(0,112,243,0.15)' : '#0070f3') : (isDark ? '#0a0a0a' : '#ffffff'),
+                  color: workbenchScenario === id ? (isDark ? '#38bdf8' : '#ffffff') : (isDark ? '#888888' : '#555555'),
                   transition: 'border-color 0.15s, background 0.15s, color 0.15s',
                 }}
               >
@@ -825,257 +921,130 @@ export function LandingPage({ onViewChange, theme }) {
             ))}
           </div>
 
-          {/* Interactive Metric Pill Bar */}
+          {/* Single toggle-compare card */}
           <div style={{
-            display: 'flex',
-            flexWrap: 'wrap',
-            justifyContent: 'center',
-            gap: '16px',
-            marginBottom: '24px',
+            borderRadius: '12px',
+            border: `1px solid ${isDark ? '#1f1f1f' : '#e0e0e0'}`,
+            overflow: 'hidden',
+            background: isDark ? '#050505' : '#ffffff',
           }}>
+            {/* Header bar: identity + toggle */}
             <div style={{
-              display: 'flex', alignItems: 'center', gap: '8px',
-              padding: '6px 14px', borderRadius: '999px',
-              background: isDark ? '#111111' : '#f5f5f5',
-              border: `1px solid ${isDark ? '#222' : '#e5e5e5'}`,
-              fontSize: '12px', color: isDark ? '#cccccc' : '#444444',
+              padding: '12px 16px',
+              borderBottom: `1px solid ${isDark ? '#1c1c1f' : '#eeeeee'}`,
+              background: isDark ? '#000000' : '#fafafa',
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap',
             }}>
-              <span style={{ color: '#ef4444', fontWeight: 700 }}>Legacy Frameworks:</span> 80+ lines boilerplate
-            </div>
-            <div style={{
-              display: 'flex', alignItems: 'center', gap: '8px',
-              padding: '6px 14px', borderRadius: '999px',
-              background: isDark ? 'rgba(74,222,128,0.08)' : '#f0fdf4',
-              border: `1px solid ${isDark ? 'rgba(74,222,128,0.25)' : '#bbf7d0'}`,
-              fontSize: '12px', color: isDark ? '#4ade80' : '#166534', fontWeight: 600,
-            }}>
-              <span style={{ color: '#4ade80', fontWeight: 700 }}>With Vulcan:</span> 85% less code & zero bloat
-            </div>
-          </div>
-
-          {/* Side-by-Side Interactive Workbench Grid */}
-          <div style={{ borderRadius: '14px', overflow: 'hidden', border: `1px solid ${isDark ? '#1f1f1f' : '#e0e0e0'}` }}
-            className="grid grid-cols-1 md:grid-cols-2 gap-[1px] bg-[#1a1a1a]">
-
-            {/* Left Panel: Legacy Frameworks */}
-            <div style={{ background: '#09090b', display: 'flex', flexDirection: 'column' }}>
-              <div style={{
-                padding: '12px 18px',
-                borderBottom: '1px solid #1c1c1f',
-                background: '#000000',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-              }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#ef4444', display: 'inline-block' }} />
-                  <span style={{ fontSize: '11.5px', fontFamily: 'var(--font-mono)', color: '#ef4444', fontWeight: 600, letterSpacing: '0.05em' }}>
-                    {workbenchScenario === 'basic' && 'LangChain / LangGraph (65+ Lines)'}
-                    {workbenchScenario === 'guardrails' && 'Custom Interceptor Middleware (45+ Lines)'}
-                    {workbenchScenario === 'handoffs' && 'Complex Graph State Routing (55+ Lines)'}
-                  </span>
-                </div>
-                <span style={{ fontSize: '10.5px', fontFamily: 'var(--font-mono)', color: '#666' }}>Heavy Dependencies</span>
-              </div>
-              <pre style={{
-                padding: '20px 22px',
-                margin: 0,
-                fontSize: '12.5px',
-                lineHeight: '1.75',
-                fontFamily: 'var(--font-mono)',
-                color: '#71717a',
-                textAlign: 'left',
-                overflowX: 'auto',
-                whiteSpace: 'pre-wrap',
-                wordBreak: 'break-word',
-                flex: 1,
-              }}>
-                {workbenchScenario === 'basic' && `// 65+ lines of StateGraph & ToolNode setup
-import { ChatOpenAI } from "@langchain/openai"
-import { ToolNode } from "@langchain/langgraph"
-import { StateGraph, MessagesAnnotation }
-  from "@langchain/langgraph"
-
-const model = new ChatOpenAI({ model: "gpt-4o" })
-  .bindTools(tools)
-
-function shouldContinue({ messages }) {
-  const lastMsg = messages[messages.length - 1]
-  if (lastMsg.tool_calls?.length) return "tools"
-  return "__end__"
-}
-
-async function callModel(state) {
-  const res = await model.invoke(state.messages)
-  return { messages: [res] }
-}
-
-const workflow = new StateGraph(MessagesAnnotation)
-workflow.addNode("agent", callModel)
-workflow.addNode("tools", new ToolNode(tools))
-workflow.addEdge("__start__", "agent")
-workflow.addConditionalEdges("agent", shouldContinue)
-
-const app = workflow.compile()
-const res = await app.invoke({ messages: [input] })`}
-
-                {workbenchScenario === 'guardrails' && `// Manual Regex Interceptor Classes
-class PIIInterceptor {
-  async intercept(input: string) {
-    if (input.match(/([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\\.[a-zA-Z0-9_-]+)/)) {
-      throw new Error("PII Leak Detected!")
-    }
-  }
-}
-
-class KeywordBlocker {
-  constructor(private keywords: string[]) {}
-  async check(text: string) {
-    for (const kw of this.keywords) {
-      if (text.toLowerCase().includes(kw)) return false
-    }
-    return true
-  }
-}
-// Wrap manually around every execution node...`}
-
-                {workbenchScenario === 'handoffs' && `// Complex conditional state graph routing
-const workflow = new StateGraph(MultiAgentState)
-workflow.addNode("billing_agent", billingHandler)
-workflow.addNode("support_agent", supportHandler)
-
-workflow.addConditionalEdges("triage", (state) => {
-  if (state.visited.includes(state.target)) {
-    throw new Error("Infinite handoff loop detected!")
-  }
-  return state.target
-})
-
-const app = workflow.compile()`}
-              </pre>
-            </div>
-
-            {/* Right Panel: Vulcan Agentic SDK */}
-            <div style={{ background: '#040404', display: 'flex', flexDirection: 'column', position: 'relative' }}>
-              <div style={{
-                padding: '12px 18px',
-                borderBottom: '1px solid #1c1c1f',
-                background: '#000000',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-              }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#4ade80', display: 'inline-block' }} />
-                  <span style={{ fontSize: '11.5px', fontFamily: 'var(--font-mono)', color: '#4ade80', fontWeight: 600, letterSpacing: '0.05em' }}>
-                    {workbenchScenario === 'basic' && 'Vulcan SDK (6 Clean Lines)'}
-                    {workbenchScenario === 'guardrails' && 'Vulcan SDK (1 Line Guardrails)'}
-                    {workbenchScenario === 'handoffs' && 'Vulcan SDK (3 Lines Handoff)'}
-                  </span>
-                </div>
-                <button
-                  onClick={() => {
-                    const snippet = workbenchScenario === 'basic'
-                      ? `import { Vulcan } from 'vulcan-agentic-sdk'\nconst agent = Vulcan.createAgent({ name: 'assistant', tools: [searchTool] })\nconst { output } = await Vulcan.run(agent, 'Query')`
-                      : workbenchScenario === 'guardrails'
-                        ? `import { Vulcan, PIIScrubberGuardrail } from 'vulcan-agentic-sdk'\nconst agent = Vulcan.createAgent({ name: 'safe-bot', guardrails: [new PIIScrubberGuardrail()] })`
-                        : `const triage = Vulcan.createAgent({ name: 'triage' }).withHandoff(billingAgent)`
-                    navigator.clipboard.writeText(snippet)
-                    setWorkbenchCopied(true)
-                    setTimeout(() => setWorkbenchCopied(false), 2000)
-                  }}
-                  style={{
-                    color: workbenchCopied ? '#4ade80' : '#888888',
-                    background: workbenchCopied ? 'rgba(74,222,128,0.1)' : 'rgba(255,255,255,0.05)',
-                    border: `1px solid ${workbenchCopied ? 'rgba(74,222,128,0.3)' : 'rgba(255,255,255,0.1)'}`,
-                    cursor: 'pointer',
-                    fontSize: '10.5px',
-                    fontFamily: 'var(--font-mono)',
-                    padding: '2px 8px',
-                    borderRadius: '4px',
-                    transition: 'all 0.15s',
-                  }}
-                >
-                  {workbenchCopied ? '✓ Copied' : 'Copy'}
-                </button>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{
+                  width: 7, height: 7, borderRadius: '50%',
+                  background: compareMode === 'vulcan' ? '#4ade80' : '#ef4444',
+                  display: 'inline-block', flexShrink: 0,
+                }} />
+                <span style={{
+                  fontSize: '11.5px', fontFamily: 'var(--font-mono)', fontWeight: 600, letterSpacing: '0.03em',
+                  color: compareMode === 'vulcan' ? '#4ade80' : '#ef4444',
+                }}>
+                  {activeScenario[compareMode === 'vulcan' ? 'vulcanName' : 'legacyName']}
+                </span>
+                <span style={{
+                  fontSize: '10.5px', fontFamily: 'var(--font-mono)', color: isDark ? '#a1a1a1' : '#626262',
+                  border: `1px solid ${isDark ? '#2a2a2a' : '#e0e0e0'}`, borderRadius: '4px', padding: '1px 6px',
+                }}>
+                  {activeScenario[compareMode === 'vulcan' ? 'vulcanLines' : 'legacyLines']} lines
+                </span>
               </div>
 
-              <pre style={{
-                padding: '20px 22px',
-                margin: 0,
-                fontSize: '12.5px',
-                lineHeight: '1.75',
-                fontFamily: 'var(--font-mono)',
-                color: '#e4e4e7',
-                textAlign: 'left',
-                overflowX: 'auto',
-                whiteSpace: 'pre-wrap',
-                wordBreak: 'break-word',
-                flex: 1,
-              }}>
-                {workbenchScenario === 'basic' && (
-                  <>
-                    <span style={{ color: '#79b8ff' }}>import</span> {'{ Vulcan, z }'} <span style={{ color: '#79b8ff' }}>from</span> <span style={{ color: '#9ecbff' }}>'vulcan-agentic-sdk'</span>{'\n\n'}
-                    <span style={{ color: '#79b8ff' }}>const</span> agent = <span style={{ color: '#ffab70' }}>Vulcan</span>.<span style={{ color: '#b39ddb' }}>createAgent</span>({`{\n`}
-                    {'  '}name: <span style={{ color: '#9ecbff' }}>'assistant'</span>,{`\n`}
-                    {'  '}instructions: <span style={{ color: '#9ecbff' }}>'Help the user with tools.'</span>,{`\n`}
-                    {'  '}tools: [searchTool, calcTool],{`\n`}
-                    {`}`}){'\n\n'}
-                    <span style={{ color: '#79b8ff' }}>const</span> {'{ output }'} = <span style={{ color: '#79b8ff' }}>await</span> <span style={{ color: '#ffab70' }}>Vulcan</span>.<span style={{ color: '#b39ddb' }}>run</span>({`\n`}
-                    {'  '}agent,{`\n`}
-                    {'  '}<span style={{ color: '#9ecbff' }}>'What is 128 multiplied by 37?'</span>{`\n`}
-                    ){'\n'}
-                    <span style={{ color: '#555555', fontStyle: 'italic' }}>// ✓ Auto tool execution loop + Zod schema validation</span>
-                  </>
+              {/* Legacy / Vulcan switch */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                {compareMode === 'vulcan' && (
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(activeScenario.vulcanCode)
+                      setWorkbenchCopied(true)
+                      setTimeout(() => setWorkbenchCopied(false), 2000)
+                    }}
+                    style={{
+                      color: workbenchCopied ? '#4ade80' : (isDark ? '#a1a1a1' : '#626262'),
+                      background: 'transparent', border: 'none', cursor: 'pointer',
+                      fontSize: '10.5px', fontFamily: 'var(--font-mono)', padding: '2px 4px',
+                    }}
+                  >
+                    {workbenchCopied ? '✓ Copied' : 'Copy'}
+                  </button>
                 )}
-
-                {workbenchScenario === 'guardrails' && (
-                  <>
-                    <span style={{ color: '#79b8ff' }}>import</span> {'{ Vulcan, PIIScrubberGuardrail, KeywordBlockGuardrail }'}{'\n'}
-                    {'  '}<span style={{ color: '#79b8ff' }}>from</span> <span style={{ color: '#9ecbff' }}>'vulcan-agentic-sdk'</span>{'\n\n'}
-                    <span style={{ color: '#79b8ff' }}>const</span> agent = <span style={{ color: '#ffab70' }}>Vulcan</span>.<span style={{ color: '#b39ddb' }}>createAgent</span>({`{\n`}
-                    {'  '}name: <span style={{ color: '#9ecbff' }}>'secure-agent'</span>,{`\n`}
-                    {'  '}instructions: <span style={{ color: '#9ecbff' }}>'Safe AI assistant.'</span>,{`\n`}
-                    {'  '}guardrails: [{`\n`}
-                    {'    '}<span style={{ color: '#79b8ff' }}>new</span> <span style={{ color: '#ffab70' }}>KeywordBlockGuardrail</span>([<span style={{ color: '#9ecbff' }}>'jailbreak'</span>]), <span style={{ color: '#555555', fontStyle: 'italic' }}>// Intercepts prompt</span>{`\n`}
-                    {'    '}<span style={{ color: '#79b8ff' }}>new</span> <span style={{ color: '#ffab70' }}>PIIScrubberGuardrail</span>(),               <span style={{ color: '#555555', fontStyle: 'italic' }}>// Scrubs output PII</span>{`\n`}
-                    {'  '}],{`\n`}
-                    {`}`}){'\n\n'}
-                    <span style={{ color: '#555555', fontStyle: 'italic' }}>// ✓ Intercepts prompt, tool inputs, and output text</span>
-                  </>
-                )}
-
-                {workbenchScenario === 'handoffs' && (
-                  <>
-                    <span style={{ color: '#79b8ff' }}>const</span> billing = <span style={{ color: '#ffab70' }}>Vulcan</span>.<span style={{ color: '#b39ddb' }}>createAgent</span>({`{ name: `}<span style={{ color: '#9ecbff' }}>'billing'</span>{`, ... }`}){'\n'}
-                    <span style={{ color: '#79b8ff' }}>const</span> support = <span style={{ color: '#ffab70' }}>Vulcan</span>.<span style={{ color: '#b39ddb' }}>createAgent</span>({`{ name: `}<span style={{ color: '#9ecbff' }}>'support'</span>{`, ... }`}){'\n\n'}
-                    <span style={{ color: '#555555', fontStyle: 'italic' }}>// Built-in cycle detection & automatic state context transfer!</span>{'\n'}
-                    <span style={{ color: '#79b8ff' }}>const</span> triage = <span style={{ color: '#ffab70' }}>Vulcan</span>.<span style={{ color: '#b39ddb' }}>createAgent</span>({`{ name: `}<span style={{ color: '#9ecbff' }}>'triage'</span>{` }`}){'\n'}
-                    {'  '}.<span style={{ color: '#b39ddb' }}>withHandoff</span>(billing){'\n'}
-                    {'  '}.<span style={{ color: '#b39ddb' }}>withHandoff</span>(support){'\n\n'}
-                    <span style={{ color: '#79b8ff' }}>const</span> {'{ output }'} = <span style={{ color: '#79b8ff' }}>await</span> <span style={{ color: '#ffab70' }}>Vulcan</span>.<span style={{ color: '#b39ddb' }}>run</span>(triage, <span style={{ color: '#9ecbff' }}>'I need a refund.'</span>)
-                  </>
-                )}
-              </pre>
+                <div style={{
+                  display: 'flex', padding: '2px', borderRadius: '999px',
+                  background: isDark ? '#111111' : '#eeeeee', border: `1px solid ${isDark ? '#222' : '#e0e0e0'}`,
+                }}>
+                  {['legacy', 'vulcan'].map(mode => (
+                    <button
+                      key={mode}
+                      onClick={() => setCompareMode(mode)}
+                      style={{
+                        padding: '4px 12px', borderRadius: '999px', border: 'none', cursor: 'pointer',
+                        fontSize: '11px', fontWeight: 600, fontFamily: 'system-ui, -apple-system, sans-serif',
+                        background: compareMode === mode ? (isDark ? '#ffffff' : '#111111') : 'transparent',
+                        color: compareMode === mode ? (isDark ? '#000000' : '#ffffff') : (isDark ? '#888888' : '#666666'),
+                        transition: 'background 0.15s, color 0.15s',
+                      }}
+                    >
+                      {mode === 'legacy' ? 'Legacy' : 'Vulcan'}
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
+
+            {/* Code body */}
+            <pre style={{
+              margin: 0, padding: '18px 20px', minHeight: '260px',
+              fontSize: '12.5px', lineHeight: '1.75', fontFamily: 'var(--font-mono)',
+              color: compareMode === 'vulcan' ? (isDark ? '#e4e4e7' : '#1a1a1a') : (isDark ? '#71717a' : '#888888'),
+              textAlign: 'left', overflowX: 'auto', whiteSpace: 'pre-wrap', wordBreak: 'break-word',
+              background: isDark ? '#030303' : '#ffffff',
+            }}>
+              {(compareMode === 'vulcan' ? activeScenario.vulcanCode : activeScenario.legacyCode)
+                .split('\n').map((line, i) => (
+                  <div key={i} style={{ color: line.trim().startsWith('//') ? (isDark ? '#4a4a4a' : '#aaaaaa') : 'inherit' }}>
+                    {line || '\u00A0'}
+                  </div>
+                ))}
+            </pre>
+
+            {/* Footer: reduction stat, only rewards switching to Vulcan */}
+            {compareMode === 'vulcan' && (
+              <div style={{
+                padding: '10px 16px', borderTop: `1px solid ${isDark ? '#1c1c1f' : '#eeeeee'}`,
+                background: isDark ? 'rgba(74,222,128,0.05)' : '#f0fdf4',
+                display: 'flex', alignItems: 'center', gap: '8px',
+              }}>
+                <span style={{ fontSize: '12px', color: isDark ? '#4ade80' : '#166534', fontWeight: 700 }}>
+                  {Math.round((1 - activeScenario.vulcanLines / activeScenario.legacyLines) * 100)}% less code
+                </span>
+                <span style={{ fontSize: '11.5px', color: isDark ? '#5b8f6f' : '#4d7a5b' }}>
+                  than the {activeScenario.legacyName} version
+                </span>
+              </div>
+            )}
           </div>
 
-          {/* 3 callout feature pills below */}
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', marginTop: '28px', justifyContent: 'center' }}>
+          {/* Callout pills */}
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', marginTop: '20px', justifyContent: 'center' }}>
             {[
-              { bad: 'Fragile Graph Wiring', good: 'Declarative Agent Config' },
-              { bad: 'Heavy Package Bloat', good: 'Zero Heavy Dependencies (< 50KB)' },
-              { bad: 'Opaque Execution Graphs', good: 'Full OTLP Telemetry & Tracing' },
+              { bad: 'Fragile graph wiring', good: 'Declarative config' },
+              { bad: 'Heavy dependencies', good: '< 50KB, zero bloat' },
+              { bad: 'Opaque execution', good: 'Full tracing built in' },
             ].map(item => (
               <div key={item.bad} style={{
-                display: 'flex', alignItems: 'center', gap: '8px',
+                display: 'flex', alignItems: 'center', gap: '6px',
                 background: isDark ? '#0a0a0a' : '#f5f5f5',
                 border: `1px solid ${isDark ? '#1f1f1f' : '#e0e0e0'}`,
-                borderRadius: '999px', padding: '6px 14px',
+                borderRadius: '999px', padding: '5px 12px',
               }}>
-                <span style={{ fontSize: '11.5px', color: '#777777', textDecoration: 'line-through' }}>{item.bad}</span>
-                <span style={{ color: '#444', fontSize: '11.5px' }}>→</span>
-                <span style={{ fontSize: '11.5px', color: '#4ade80', fontWeight: 600 }}>✓ {item.good}</span>
+                <span style={{ fontSize: '11px', color: '#777777', textDecoration: 'line-through' }}>{item.bad}</span>
+                <span style={{ color: '#444', fontSize: '11px' }}>→</span>
+                <span style={{ fontSize: '11px', color: '#4ade80', fontWeight: 600 }}>{item.good}</span>
               </div>
             ))}
           </div>
@@ -1222,7 +1191,7 @@ const app = workflow.compile()`}
       </section>
 
       {/* ══════════════════════════════════════════════════════════════════════
-          §6 TESTIMONIALS (Horizontal Marquee Slider)
+          §6 TESTIMONIALS (Horizontal Infinite Marquee)
       ══════════════════════════════════════════════════════════════════════ */}
       <section style={{
         borderTop: `1px solid ${s.border}`,
@@ -1243,134 +1212,66 @@ const app = workflow.compile()`}
           </p>
         </div>
 
-        {/* Horizontal Marquee Container with Left & Right Gradient Blur Overlays */}
-        <div style={{
-          width: '100%',
-          position: 'relative',
-          padding: '10px 0',
-        }}>
-          {/* Left Edge Gradient Fade */}
+        {/* Horizontal Marquee with Left & Right Gradient Fades */}
+        <div style={{ width: '100%', position: 'relative', padding: '10px 0' }}>
+          {/* Left fade */}
           <div style={{
-            position: 'absolute',
-            top: 0,
-            bottom: 0,
-            left: 0,
-            width: '140px',
-            zIndex: 10,
+            position: 'absolute', top: 0, bottom: 0, left: 0, width: '140px', zIndex: 10,
             pointerEvents: 'none',
             background: `linear-gradient(to right, ${isDark ? '#050505' : '#ffffff'} 0%, transparent 100%)`,
           }} />
-
-          {/* Right Edge Gradient Fade */}
+          {/* Right fade */}
           <div style={{
-            position: 'absolute',
-            top: 0,
-            bottom: 0,
-            right: 0,
-            width: '140px',
-            zIndex: 10,
+            position: 'absolute', top: 0, bottom: 0, right: 0, width: '140px', zIndex: 10,
             pointerEvents: 'none',
             background: `linear-gradient(to left, ${isDark ? '#050505' : '#ffffff'} 0%, transparent 100%)`,
           }} />
 
-          {/* Marquee list */}
           <div className="horizontal-scroll-hide-scrollbar" style={{ width: '100%', overflowX: 'auto' }}>
             <div className="animate-marquee" style={{ gap: '20px', paddingLeft: '20px' }}>
               {(() => {
                 const testimonialsList = [
-                  {
-                    quote: 'Vulcan makes building AI agents clean and accessible for every TypeScript developer. Zero bloat, pure logic.',
-                    name: 'Hitesh Choudhary', role: 'Tech Educator & Founder', initials: 'HC', color: '#0070f3',
-                  },
-                  {
-                    quote: 'Type-safe tool calls with Zod validation out of the box is brilliant. No extra framework overhead, just solid code.',
-                    name: 'Piyush Garg', role: 'Full Stack & AI Engineer', initials: 'PG', color: '#8b5cf6',
-                  },
-                  {
-                    quote: 'The built-in web search and code sandbox tools saved our team hours of setup. Super fast and easy to use.',
-                    name: 'Peeyush', role: 'Full Stack Developer', initials: 'P', color: '#06b6d4',
-                  },
-                  {
-                    quote: 'Human-in-the-loop approvals and guardrails give us peace of mind when running AI workflows in production.',
-                    name: 'Ayush', role: 'AI Engineer', initials: 'A', color: '#10b981',
-                  },
-                  {
-                    quote: 'The event streaming API makes building interactive agent UIs so smooth. Truly developer-first!',
-                    name: 'Vaishnavi', role: 'Frontend Specialist', initials: 'V', color: '#ec4899',
-                  },
-                  {
-                    quote: 'Agent handoffs and cycle detection prevent infinite loops automatically. Essential for multi-agent apps.',
-                    name: 'Dipak Kumar', role: 'Backend & Systems Dev', initials: 'DK', color: '#f59e0b',
-                  },
-                  {
-                    quote: 'Lightweight, zero dependencies, and multi-provider support. Switching between Gemini, Groq, OpenAI, and Claude is seamless.',
-                    name: 'Aman Singh', role: 'TypeScript Developer', initials: 'AS', color: '#3b82f6',
-                  },
-                  {
-                    quote: 'The SQLite session storage and structured tracing are incredible. Everything you need for production agents.',
-                    name: 'Sujal Rai', role: 'Software Engineer', initials: 'SR', color: '#6366f1',
-                  },
-                  {
-                    quote: 'Clean API design and beautiful developer experience. Vulcan sets a new standard for TypeScript AI frameworks.',
-                    name: 'Anushka', role: 'UI/UX & Frontend Engineer', initials: 'AN', color: '#a855f7',
-                  },
+                  { quote: 'Vulcan makes building AI agents clean and accessible for every TypeScript developer. Zero bloat, pure logic.', name: 'Hitesh Choudhary', role: 'Tech Educator & Founder', initials: 'HC', color: '#10b981' },
+                  { quote: 'Type-safe tool calls with Zod validation out of the box is brilliant. No extra framework overhead, just solid code.', name: 'Piyush Garg', role: 'Full Stack & AI Engineer', initials: 'PG', color: '#10b981' },
+                  { quote: 'The built-in web search and code sandbox tools saved our team hours of setup. Super fast and easy to use.', name: 'Peeyush', role: 'Full Stack Developer', initials: 'P', color: '#10b981' },
+                  { quote: 'Human-in-the-loop approvals and guardrails give us peace of mind when running AI workflows in production.', name: 'Ayush', role: 'AI Engineer', initials: 'A', color: '#10b981' },
+                  { quote: 'The event streaming API makes building interactive agent UIs so smooth. Truly developer-first!', name: 'Vaishnavi', role: 'Frontend Specialist', initials: 'V', color: '#34d399' },
+                  { quote: 'Agent handoffs and cycle detection prevent infinite loops automatically. Essential for multi-agent apps.', name: 'Dipak Kumar', role: 'Backend & Systems Dev', initials: 'DK', color: '#f59e0b' },
+                  { quote: 'Lightweight, zero dependencies, and multi-provider support. Switching between Gemini, Groq, OpenAI, and Claude is seamless.', name: 'Aman Singh', role: 'TypeScript Developer', initials: 'AS', color: '#3b82f6' },
+                  { quote: 'The SQLite session storage and structured tracing are incredible. Everything you need for production agents.', name: 'Sujal Rai', role: 'Software Engineer', initials: 'SR', color: '#6366f1' },
+                  { quote: 'Clean API design and beautiful developer experience. Vulcan sets a new standard for TypeScript AI frameworks.', name: 'Anushka', role: 'UI/UX & Frontend Engineer', initials: 'AN', color: '#059669' },
                 ]
-
-                // Double the array for continuous seamless infinite loop
                 return [...testimonialsList, ...testimonialsList].map((t, idx) => (
                   <div
                     key={`${t.name}-${idx}`}
                     style={{
-                      width: '340px',
-                      flexShrink: 0,
+                      width: '340px', flexShrink: 0,
                       border: `1px solid ${isDark ? '#1f1f1f' : '#e5e5e5'}`,
-                      borderRadius: '12px',
-                      padding: '24px',
+                      borderRadius: '12px', padding: '24px',
                       background: isDark ? '#0c0c0c' : '#ffffff',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      justifyContent: 'space-between',
-                      gap: '18px',
+                      display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: '18px',
                       boxShadow: isDark ? '0 10px 30px rgba(0,0,0,0.5)' : '0 10px 30px rgba(0,0,0,0.04)',
                       transition: 'border-color 0.2s, transform 0.2s',
                       cursor: 'default',
                     }}
-                    onMouseEnter={e => {
-                      e.currentTarget.style.borderColor = t.color
-                      e.currentTarget.style.transform = 'translateY(-3px)'
-                    }}
-                    onMouseLeave={e => {
-                      e.currentTarget.style.borderColor = isDark ? '#1f1f1f' : '#e5e5e5'
-                      e.currentTarget.style.transform = 'translateY(0)'
-                    }}
+                    onMouseEnter={e => { e.currentTarget.style.borderColor = t.color; e.currentTarget.style.transform = 'translateY(-3px)' }}
+                    onMouseLeave={e => { e.currentTarget.style.borderColor = isDark ? '#1f1f1f' : '#e5e5e5'; e.currentTarget.style.transform = 'translateY(0)' }}
                   >
                     {/* Stars */}
                     <div style={{ display: 'flex', gap: '4px' }}>
-                      {[...Array(5)].map((_, i) => (
-                        <span key={i} style={{ color: '#fbbf24', fontSize: '13px' }}>★</span>
-                      ))}
+                      {[...Array(5)].map((_, i) => <span key={i} style={{ color: '#fbbf24', fontSize: '13px' }}>★</span>)}
                     </div>
-
                     {/* Quote */}
-                    <p style={{
-                      fontSize: '13.5px',
-                      lineHeight: '1.65',
-                      color: isDark ? '#cccccc' : '#444444',
-                      margin: 0,
-                      flex: 1,
-                      fontStyle: 'normal',
-                    }}>
+                    <p style={{ fontSize: '13.5px', lineHeight: '1.65', color: isDark ? '#cccccc' : '#444444', margin: 0, flex: 1 }}>
                       "{t.quote}"
                     </p>
-
                     {/* Author */}
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px', borderTop: `1px solid ${isDark ? '#1a1a1a' : '#f0f0f0'}`, paddingTop: '14px' }}>
                       <div style={{
                         width: 38, height: 38, borderRadius: '50%',
                         background: `${t.color}1e`, border: `1px solid ${t.color}55`,
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        fontSize: '12px', fontWeight: 700, color: t.color, fontFamily: 'var(--font-mono)',
-                        flexShrink: 0,
+                        fontSize: '12px', fontWeight: 700, color: t.color, fontFamily: 'var(--font-mono)', flexShrink: 0,
                       }}>{t.initials}</div>
                       <div>
                         <div style={{ fontSize: '13.5px', fontWeight: 650, color: s.textPrimary, letterSpacing: '-0.2px' }}>{t.name}</div>

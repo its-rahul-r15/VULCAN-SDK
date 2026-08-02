@@ -50,7 +50,7 @@ export function Header({ currentView, onViewChange, theme, onToggleTheme }) {
             style={{
               position: 'absolute',
               right: '12px',
-              color: '#555',
+              color: '#8e8e8e',
               background: 'none',
               border: 'none',
               cursor: 'pointer',
@@ -70,13 +70,14 @@ export function Header({ currentView, onViewChange, theme, onToggleTheme }) {
           ? 'border-[#262626] bg-black/90 backdrop-blur-md text-white'
           : 'border-[#ebebeb] bg-white/90 backdrop-blur-md text-[#171717]'
         }`}>
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
+      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
 
           {/* Left Logo */}
           <div className="flex items-center gap-6 md:gap-8">
             <button
               onClick={() => { onViewChange('landing'); setMobileMenuOpen(false) }}
               className="flex items-center gap-2.5 font-semibold tracking-tight transition hover:opacity-80"
+              aria-label="Vulcan SDK home page"
             >
               <div className={`h-5 w-5 flex items-center justify-center [clip-path:polygon(50%_0%,_0%_100%,_100%_100%)] ${isDark ? 'bg-white' : 'bg-[#171717]'}`} />
               <span className={`text-base font-semibold tracking-tight ${isDark ? 'text-white' : 'text-[#171717]'}`}>

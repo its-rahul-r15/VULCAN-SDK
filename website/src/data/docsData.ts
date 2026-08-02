@@ -3,7 +3,8 @@ export interface DocSection {
   content: string
   code?: string
   codeLanguage?: string
-  callout?: { type: 'tip' | 'warning' | 'note' | 'danger'; text: string }
+  codeFilename?: string
+  callout?: { type: 'tip' | 'warning' | 'note' | 'danger' | 'important'; text: string }
   steps?: string[]
   table?: { headers: string[]; rows: string[][] }
 }
@@ -74,6 +75,7 @@ pnpm add vulcan-agentic-sdk
 # yarn
 yarn add vulcan-agentic-sdk`,
         codeLanguage: 'bash',
+        codeFilename: 'Terminal',
       },
       {
         title: 'Install a Provider SDK',
@@ -87,6 +89,7 @@ npm install openai
 # Anthropic Claude
 npm install @anthropic-ai/sdk`,
         codeLanguage: 'bash',
+        codeFilename: 'Terminal',
       },
       {
         title: 'Configure API Keys',
@@ -96,6 +99,7 @@ GEMINI_API_KEY="AIzaSy..."
 OPENAI_API_KEY="sk-proj-..."
 ANTHROPIC_API_KEY="sk-ant-api03-..."`,
         codeLanguage: 'bash',
+        codeFilename: '.env',
         callout: { type: 'warning', text: 'Never commit your .env file to version control. Add it to your .gitignore immediately.' },
       },
       {
@@ -111,6 +115,7 @@ ANTHROPIC_API_KEY="sk-ant-api03-..."`,
   }
 }`,
         codeLanguage: 'json',
+        codeFilename: 'tsconfig.json',
       },
     ],
   },
@@ -140,6 +145,7 @@ const calculatorTool = Vulcan.createTool({
   },
 })`,
         codeLanguage: 'typescript',
+        codeFilename: 'tool.ts',
       },
       {
         title: 'Step 2 — Create an Agent',
@@ -151,6 +157,7 @@ const calculatorTool = Vulcan.createTool({
   tools: [calculatorTool],
 })`,
         codeLanguage: 'typescript',
+        codeFilename: 'agent.ts',
       },
       {
         title: 'Step 3 — Run the Agent',
@@ -164,7 +171,8 @@ const calculatorTool = Vulcan.createTool({
 
 main()`,
         codeLanguage: 'typescript',
-        callout: { type: 'tip', text: 'Run with npx tsx agent.ts for instant TypeScript execution without a build step.' },
+        codeFilename: 'agent.ts',
+        callout: { type: 'tip', text: 'Run with `npx tsx agent.ts` for instant TypeScript execution without a build step.' },
       },
       {
         title: 'Complete 1-File Working Script',
@@ -202,7 +210,8 @@ async function main() {
 
 main()`,
         codeLanguage: 'typescript',
-        callout: { type: 'tip', text: 'Save as agent.ts and execute with: npx tsx agent.ts' },
+        codeFilename: 'agent.ts',
+        callout: { type: 'tip', text: 'Save as `agent.ts` and execute with: `npx tsx agent.ts`' },
       },
       {
         title: 'Multi-Turn Conversations',
@@ -217,6 +226,7 @@ const result2 = await Vulcan.run(mathAgent, 'Now divide that by 6.', {
 })
 // → "144 divided by 6 is 24."`,
         codeLanguage: 'typescript',
+        codeFilename: 'agent.ts',
       },
     ],
   },
@@ -246,6 +256,7 @@ const getWeather = Vulcan.createTool({
   }
 })`,
         codeLanguage: 'typescript',
+        codeFilename: 'tools/weather.ts',
       },
       {
         title: 'Validation & Auto-Correction',
@@ -274,6 +285,7 @@ const getWeather = Vulcan.createTool({
   }
 })`,
         codeLanguage: 'typescript',
+        codeFilename: 'tools/fetch-page.ts',
       },
       {
         title: 'Returning Structured Data',
@@ -290,6 +302,7 @@ async execute({ ticker }) {
   }
 }`,
         codeLanguage: 'typescript',
+        codeFilename: 'tools/stock.ts',
       },
     ],
   },
@@ -338,6 +351,7 @@ const secureAgent = Vulcan.createAgent({
   ],
 })`,
         codeLanguage: 'typescript',
+        codeFilename: 'agent.ts',
       },
       {
         title: 'Custom Function Guardrail',
@@ -366,7 +380,8 @@ const agent = Vulcan.createAgent({
   guardrails: [businessHoursGuard],
 })`,
         codeLanguage: 'typescript',
-        callout: { type: 'tip', text: 'Guardrails are evaluated in order. Put fast, cheap checks (like MaxLength) before slow, expensive ones (like LLM-based moderation) to short-circuit early.' },
+        codeFilename: 'guardrails/business-hours.ts',
+        callout: { type: 'tip', text: 'Guardrails are evaluated in order. Put fast, cheap checks (like `MaxLength`) before slow, expensive ones (like LLM-based moderation) to short-circuit early.' },
       },
       {
         title: 'BlockedToolsGuardrail',
@@ -377,6 +392,7 @@ const toolBlocker = new BlockedToolsGuardrail(
   { type: 'tool' }
 )`,
         codeLanguage: 'typescript',
+        codeFilename: 'guardrails/tool-blocker.ts',
       },
     ],
   },
@@ -395,6 +411,7 @@ const r1 = await Vulcan.run(agent, 'My name is Rahul.', { session: 'chat-1' })
 const r2 = await Vulcan.run(agent, 'What is my name?', { session: 'chat-1' })
 // r2.output → "Your name is Rahul."`,
         codeLanguage: 'typescript',
+        codeFilename: 'agent.ts',
       },
       {
         title: 'InMemoryStorage (Default)',
@@ -412,6 +429,7 @@ const agent = Vulcan.createAgent({
   storage, // attach storage adapter
 })`,
         codeLanguage: 'typescript',
+        codeFilename: 'storage.ts',
       },
       {
         title: 'SQLiteStorage (Persistent)',
@@ -427,7 +445,8 @@ const agent = Vulcan.createAgent({
   storage,
 })`,
         codeLanguage: 'typescript',
-        callout: { type: 'note', text: 'In production, prefer an external database adapter (Redis, PostgreSQL) for multi-instance deployments. Custom adapters can be built by implementing the SessionStorage interface.' },
+        codeFilename: 'storage.ts',
+        callout: { type: 'note', text: 'In production, prefer an external database adapter (Redis, PostgreSQL) for multi-instance deployments. Custom adapters can be built by implementing the `SessionStorage` interface.' },
       },
       {
         title: 'Custom Storage Adapter',
@@ -451,6 +470,7 @@ export class RedisStorage implements SessionStorage {
   }
 }`,
         codeLanguage: 'typescript',
+        codeFilename: 'storage/redis.ts',
       },
     ],
   },
@@ -492,6 +512,7 @@ const triageAgent = Vulcan.createAgent({
 // User query is automatically routed to the right specialist
 const result = await Vulcan.run(triageAgent, 'My invoice INV-2026-04 shows the wrong amount.')`,
         codeLanguage: 'typescript',
+        codeFilename: 'agents/triage.ts',
       },
       {
         title: 'How Handoffs Are Injected',
@@ -513,6 +534,7 @@ try {
   }
 }`,
         codeLanguage: 'typescript',
+        codeFilename: 'agents/triage.ts',
       },
       {
         title: 'Handoff with Context Injection',
@@ -526,6 +548,7 @@ try {
   }
 })`,
         codeLanguage: 'typescript',
+        codeFilename: 'agents/triage.ts',
       },
     ],
   },
@@ -551,12 +574,14 @@ console.log(\`Duration: \${trace.durationMs}ms\`) // 3412
 console.log(\`Turns:    \${trace.turns}\`)         // 3
 console.log(\`Tokens:   \${trace.totalTokens}\`)   // 486`,
         codeLanguage: 'typescript',
+        codeFilename: 'agent.ts',
       },
       {
         title: 'Pretty-Print Export',
         content: 'Export a human-readable trace table ideal for debugging in the terminal. Every step is timestamped and shows token usage.',
         code: `console.log(globalTracer.export(trace, 'pretty'))`,
         codeLanguage: 'typescript',
+        codeFilename: 'agent.ts',
       },
       {
         title: 'Pretty Export Output',
@@ -588,6 +613,7 @@ await fetch('https://logs.myapp.com/traces', {
   body: JSON.stringify(json),
 })`,
         codeLanguage: 'typescript',
+        codeFilename: 'agent.ts',
       },
       {
         title: 'Streaming Events',
@@ -609,6 +635,7 @@ await fetch('https://logs.myapp.com/traces', {
   }
 }`,
         codeLanguage: 'typescript',
+        codeFilename: 'agent.ts',
         callout: { type: 'tip', text: 'Use streaming events to build real-time progress UIs or pipe agent execution logs to a monitoring dashboard without any additional instrumentation.' },
       },
     ],
@@ -641,6 +668,7 @@ const researchAgent = Vulcan.createAgent({
   tools: [searchTool],
 })`,
         codeLanguage: 'typescript',
+        codeFilename: 'tools/search.ts',
       },
       {
         title: '2. Web Scraper Tool',
@@ -652,6 +680,7 @@ const scraperTool = createWebScraperTool({
   timeoutMs: 15000,
 })`,
         codeLanguage: 'typescript',
+        codeFilename: 'tools/scraper.ts',
       },
       {
         title: '3. Code Sandbox Tool',
@@ -660,6 +689,7 @@ const scraperTool = createWebScraperTool({
 
 const sandboxTool = createCodeSandboxTool({ timeoutMs: 5000 })`,
         codeLanguage: 'typescript',
+        codeFilename: 'tools/sandbox.ts',
       },
       {
         title: '4. Safe SQL Query Tool',
@@ -674,6 +704,7 @@ const sqlTool = createSQLQueryTool({
   },
 })`,
         codeLanguage: 'typescript',
+        codeFilename: 'tools/sql.ts',
       },
       {
         title: '5. Vector Store RAG Tool',
@@ -686,6 +717,7 @@ const ragTool = createVectorStoreTool({
   },
 })`,
         codeLanguage: 'typescript',
+        codeFilename: 'tools/rag.ts',
       },
     ],
   },
@@ -711,6 +743,7 @@ const paymentTool = Tool.create({
   },
 })`,
         codeLanguage: 'typescript',
+        codeFilename: 'tools/payment.ts',
       },
       {
         title: 'Handling Approval Callbacks',
@@ -729,6 +762,7 @@ const paymentTool = Tool.create({
   },
 })`,
         codeLanguage: 'typescript',
+        codeFilename: 'agent.ts',
       },
       {
         title: 'Execution Pause & Resume',
@@ -740,6 +774,7 @@ if (result.status === 'requires_approval') {
   // Store pendingApproval.id in DB or Web UI
 }`,
         codeLanguage: 'typescript',
+        codeFilename: 'agent.ts',
         callout: { type: 'important', text: 'HITL approvals ensure production safety for automated agents interacting with financial, healthcare, or enterprise data.' },
       },
     ],

@@ -10,8 +10,8 @@
   --color-canvas: #0a0a0a;
   --color-canvas-card: #0a0a0a;
   --color-ink: #ffffff;
-  --color-body-text: #a1a1a1;
-  --color-mute-text: #666666;
+  --color-body-text: #bfbfbf;
+  --color-mute-text: #8e8e8e;
   --color-hairline: #262626;
   --color-hairline-strong: #404040;
   --color-primary-cta: #ffffff;
@@ -23,8 +23,8 @@
   --color-canvas: #ffffff;
   --color-canvas-card: #ffffff;
   --color-ink: #171717;
-  --color-body-text: #4d4d4d;
-  --color-mute-text: #888888;
+  --color-body-text: #3f3f3f;
+  --color-mute-text: #626262;
   --color-hairline: #ebebeb;
   --color-hairline-strong: #a1a1a1;
   --color-primary-cta: #171717;
@@ -38,6 +38,7 @@
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
     transition: background-color 0.2s ease, color 0.2s ease;
+    scroll-behavior: smooth;
   }
 }
 
@@ -136,8 +137,8 @@
   background: radial-gradient(at 15% 15%, rgba(0, 124, 240, 0.25) 0px, transparent 50%),
               radial-gradient(at 85% 10%, rgba(0, 223, 216, 0.22) 0px, transparent 50%),
               radial-gradient(at 50% 45%, rgba(80, 227, 194, 0.18) 0px, transparent 50%),
-              radial-gradient(at 75% 60%, rgba(121, 40, 202, 0.22) 0px, transparent 50%),
-              radial-gradient(at 10% 85%, rgba(255, 0, 128, 0.18) 0px, transparent 50%),
+              radial-gradient(at 75% 60%, rgba(16, 185, 129, 0.22) 0px, transparent 50%),
+              radial-gradient(at 10% 85%, rgba(80, 227, 194, 0.18) 0px, transparent 50%),
               radial-gradient(at 90% 85%, rgba(249, 203, 40, 0.20) 0px, transparent 50%);
   filter: blur(55px);
   animation: meshFloat 14s ease-in-out infinite alternate;
